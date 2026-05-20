@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>CrashX Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<!-- Единый конфиг Firebase -->
+<script src="firebase-config.js"></script>
+<style>
+:root{
+  --bg:#0a0c0f;--sur:#111418;--sur2:#181c22;--sur3:#1e242c;
+  --b1:#232c38;--b2:#2a3545;
+  --acc:#00d4ff;--acc2:#005fff;
+  --grn:#00e676;--red:#ff4566;--yel:#ffd040;--pur:#a855f7;
+  --tx:#d4e8f8;--tx2:#6e95b0;--mu:#3a5265;
+  --F:'Rajdhani',sans-serif;--f:'Nunito',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;flex-direction:column}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Nunito:wght@400;500;600;700&display=swap');
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--sur);border:1px solid var(--b2);border-radius:16px;padding:32px 28px;width:340px;text-align:center}
+.login-logo{font-size:32px;font-weight:700;letter-spacing:3px;background:linear-gradient(90deg,var(--acc),#6ab4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;display:block}
+.login-sub{font-size:11px;color:var(--tx2);margin-bottom:20px}
+.lf{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;text-align:left}
+.lf label{font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1.5px}
+.lf input{background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:9px 11px;color:var(--tx);font-family:var(--f);font-size:13px;outline:none}
+.lf input:focus{border-color:var(--acc)}
+.lb-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;border-radius:9px;color:#fff;font-family:var(--F);font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;margin-top:4px}
+
+/* LAYOUT */
+.layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;background:var(--sur);border-right:1px solid var(--b1);overflow-y:auto;display:flex;flex-direction:column}
+.sb-logo{padding:16px 14px;border-bottom:1px solid var(--b1)}
+.sb-logo-t{font-size:18px;font-weight:700;letter-spacing:3px;background:linear-gradient(90deg,var(--acc),#6ab4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sb-logo-s{font-size:9px;color:var(--tx2);letter-spacing:1px}
+.sb-sect{padding:10px 8px 4px;font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:2px}
+.si{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;margin:1px 4px;transition:background .1s;border:1px solid transparent}
+.si:hover{background:var(--sur2)}.si.on{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.15)}
+.si-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.si-nm{font-size:12px;font-weight:600;color:var(--tx)}
+.si-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700}
+.sb-bot{margin-top:auto;padding:10px;border-top:1px solid var(--b1)}
+.sb-user{font-size:10px;color:var(--tx2)}.sb-logout{font-size:10px;color:var(--red);cursor:pointer;padding:2px 0}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+.pg{display:none;padding:20px}.pg.on{display:block}
+.pg-hd{margin-bottom:18px}
+.pg-t{font-size:22px;font-weight:700;letter-spacing:1px;color:var(--tx)}
+.pg-s{font-size:11px;color:var(--tx2);margin-top:2px}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.sc{background:var(--sur);border:1px solid var(--b1);border-radius:12px;padding:14px}
+.sc-ic{font-size:22px;margin-bottom:6px}.sc-v{font-size:24px;font-weight:700;color:var(--tx);font-family:var(--F)}
+.sc-l{font-size:10px;color:var(--tx2);margin-top:2px}.sc-ch{font-size:10px;margin-top:3px}
+.ch-pos{color:var(--grn)}.ch-neg{color:var(--red)}
+
+/* CARD */
+.card{background:var(--sur);border:1px solid var(--b1);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.ch{padding:11px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ch-l{display:flex;align-items:center;gap:7px}
+.ci{width:24px;height:24px;border-radius:6px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.13);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.ct{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--tx)}
+.cb{padding:14px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:1.5px;padding:5px 8px;border-bottom:1px solid var(--b1)}
+td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.te{text-align:center;color:var(--mu);padding:14px!important}
+
+/* FORM */
+.sf{display:grid;grid-template-columns:1fr;gap:9px}
+.sf-2{grid-template-columns:1fr 1fr}
+.fi{display:flex;flex-direction:column;gap:3px}
+.fi label{font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1.5px}
+.fi input,.fi select,.fi textarea{background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px 11px;color:var(--tx);font-family:var(--f);font-size:12px;outline:none;transition:border .1s;width:100%}
+.fi textarea{resize:vertical;min-height:60px}
+.fi input::placeholder,.fi textarea::placeholder{color:var(--mu)}
+.fi input:focus,.fi select:focus,.fi textarea:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(0,212,255,.08)}
+.hint{font-size:9px;color:var(--mu);margin-top:1px}
+
+/* BUTTONS */
+.btn-save{padding:9px 18px;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;border-radius:9px;color:#fff;font-family:var(--F);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:opacity .1s}
+.btn-save:hover{opacity:.88}
+.btn-danger{padding:9px 18px;background:var(--red-g,rgba(255,69,102,.1));border:1px solid rgba(255,69,102,.2);border-radius:9px;color:var(--red);font-family:var(--F);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer}
+.ab{padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-family:var(--f);font-size:11px;font-weight:700;transition:opacity .1s;white-space:nowrap}
+.ab:hover{opacity:.82}
+.ab-g{background:var(--grn);color:#000}.ab-r{background:var(--red);color:#fff}.ab-a{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);color:var(--acc)}.ab-y{background:rgba(255,208,64,.12);border:1px solid rgba(255,208,64,.2);color:var(--yel)}.ab-p{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2);color:var(--pur)}
+.ab-wrap{display:flex;gap:4px;flex-wrap:wrap}
+
+/* SWITCH */
+.sw-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1)}
+.sw-row:last-child{border-bottom:none}
+.sw-l{font-size:12px;font-weight:600;color:var(--tx)}.sw-s{font-size:9px;color:var(--tx2);margin-top:1px}
+.tog{position:relative;width:34px;height:18px;cursor:pointer;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tog-s{position:absolute;inset:0;background:var(--b2);border-radius:9px;transition:.2s}
+.tog-s::before{content:'';position:absolute;width:12px;height:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.tog input:checked~.tog-s{background:var(--grn)}
+.tog input:checked~.tog-s::before{transform:translateX(16px)}
+
+/* BADGES */
+.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+.bg_{background:rgba(0,230,118,.1);color:var(--grn);border:1px solid rgba(0,230,118,.15)}
+.br_{background:rgba(255,69,102,.1);color:var(--red);border:1px solid rgba(255,69,102,.15)}
+.by_{background:rgba(255,208,64,.1);color:var(--yel);border:1px solid rgba(255,208,64,.15)}
+.ba_{background:rgba(0,212,255,.07);color:var(--acc);border:1px solid rgba(0,212,255,.14)}
+.bp_{background:rgba(168,85,247,.1);color:var(--pur);border:1px solid rgba(168,85,247,.15)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;z-index:1000;background:var(--sur);border:1px solid var(--b1);border-radius:9px;padding:9px 14px;font-size:12px;font-weight:600;color:var(--tx);opacity:0;transition:all .24s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:6px;max-width:300px}
+.toast::before{content:'';width:3px;align-self:stretch;border-radius:2px;flex-shrink:0}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok::before{background:var(--grn)}.toast.err::before{background:var(--red)}.toast.info::before{background:var(--acc)}.toast.yel::before{background:var(--yel)}
+
+/* MODAL */
+.mov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s;padding:16px}
+.mov.show{opacity:1;pointer-events:all}
+.modal{background:var(--sur);border:1px solid var(--b2);border-radius:14px;padding:22px 20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;transform:scale(.96);transition:transform .18s cubic-bezier(.34,1.2,.64,1);position:relative}
+.mov.show .modal{transform:scale(1)}
+.mcl{position:absolute;top:13px;right:13px;width:26px;height:26px;border-radius:7px;background:var(--sur2);border:1px solid var(--b1);color:var(--tx2);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.m-ttl{font-size:17px;font-weight:700;color:var(--tx);margin-bottom:14px;padding-right:30px}
+.sf-inline{display:flex;gap:7px;align-items:flex-end}
+
+/* CHAT */
+.chat-msgs{background:var(--sur2);border:1px solid var(--b1);border-radius:9px;padding:8px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.msg{display:flex;flex-direction:column;max-width:85%}
+.msg.theirs{align-self:flex-start}.msg.mine{align-self:flex-end;align-items:flex-end}
+.msg-bub{padding:7px 10px;border-radius:9px;font-size:11px;line-height:1.5;word-break:break-word}
+.msg.theirs .msg-bub{background:var(--sur3);border:1px solid var(--b1);color:var(--tx);border-bottom-left-radius:2px}
+.msg.mine .msg-bub{background:linear-gradient(135deg,var(--acc2),rgba(0,140,220,.65));color:#fff;border-bottom-right-radius:2px}
+.msg-meta{font-size:9px;color:var(--mu);margin-top:1px;padding:0 2px}
+.chat-inp-r{display:flex;gap:5px}
+.chat-inp{flex:1;background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:7px 10px;color:var(--tx);font-family:var(--f);font-size:12px;outline:none;resize:none}
+.chat-inp:focus{border-color:var(--acc)}
+.chat-send{padding:7px 13px;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;border-radius:8px;color:#fff;font-family:var(--F);font-size:11px;font-weight:700;cursor:pointer}
+
+/* USER CARD */
+.u-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.u-info-item{background:var(--sur2);border-radius:7px;padding:8px;border:1px solid var(--b1)}
+.u-info-l{font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px}
+.u-info-v{font-size:13px;font-weight:700;color:var(--tx);font-family:var(--F);margin-top:2px}
+
+/* ODDS PANEL */
+.odds-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.odds-inp{background:var(--sur2);border:1px solid var(--b2);border-radius:7px;padding:6px 8px;color:var(--yel);font-family:var(--F);font-size:15px;font-weight:700;text-align:center;outline:none;width:100%}
+.odds-inp:focus{border-color:var(--yel)}
+.odds-lbl{font-size:9px;color:var(--tx2);text-align:center;margin-bottom:3px}
+
+/* CRASH OVERRIDE */
+.crash-ctrl{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--sur2);border-radius:10px;border:1px solid var(--b1)}
+.crash-ctrl-t{font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{width:52px;overflow:hidden}
+  .si-nm,.sb-logo-s,.sb-logo-t,.si-badge,.sb-user,.sb-logout,.sb-sect{display:none}
+  .si{justify-content:center;padding:10px}
+  .sf-2{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <span class="login-logo">CRASHX</span>
+    <div class="login-sub">Панель администратора</div>
+    <div id="l-err" style="font-size:10px;color:var(--red);min-height:12px;margin-bottom:6px"></div>
+    <div class="lf"><label>Логин</label><input id="l-login" type="text" placeholder="admin"></div>
+    <div class="lf"><label>Пароль</label><input id="l-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="lb-btn" onclick="doLogin()">ВОЙТИ</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout" id="app" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-t">CRASHX</div>
+    <div class="sb-logo-s">ADMIN PANEL</div>
+  </div>
+  <div class="sb-sect">Аналитика</div>
+  <div class="si on" onclick="nav('dash',this)"><span class="si-ic">📊</span><span class="si-nm">Дашборд</span></div>
+  <div class="sb-sect">Финансы</div>
+  <div class="si" onclick="nav('deposits',this)"><span class="si-ic">💳</span><span class="si-nm">Депозиты</span><span class="si-badge" id="dep-badge" style="display:none">0</span></div>
+  <div class="si" onclick="nav('withdrawals',this)"><span class="si-ic">💸</span><span class="si-nm">Выводы</span><span class="si-badge" id="wth-badge" style="display:none">0</span></div>
+  <div class="sb-sect">Пользователи</div>
+  <div class="si" onclick="nav('users',this)"><span class="si-ic">👥</span><span class="si-nm">Игроки</span></div>
+  <div class="si" onclick="nav('support',this)"><span class="si-ic">💬</span><span class="si-nm">Чат</span><span class="si-badge" id="msg-badge" style="display:none">!</span></div>
+  <div class="sb-sect">Контент</div>
+  <div class="si" onclick="nav('sport',this)"><span class="si-ic">⚽</span><span class="si-nm">Матчи</span></div>
+  <div class="si" onclick="nav('sportbets',this)"><span class="si-ic">📋</span><span class="si-nm">Ставки спорт</span></div>
+  <div class="si" onclick="nav('lb',this)"><span class="si-ic">🏆</span><span class="si-nm">Лидерборд</span></div>
+  <div class="si" onclick="nav('promos',this)"><span class="si-ic">🎁</span><span class="si-nm">Промокоды</span></div>
+  <div class="sb-sect">Система</div>
+  <div class="si" onclick="nav('settings',this)"><span class="si-ic">⚙️</span><span class="si-nm">Настройки</span></div>
+  <div class="si" onclick="nav('bigwins',this)"><span class="si-ic">🎰</span><span class="si-nm">Крупные выигрыши</span></div>
+  <div class="sb-bot">
+    <div class="sb-user" id="sb-user">admin</div>
+    <div class="sb-logout" onclick="logout()">Выйти</div>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dash">
+  <div class="pg-hd"><div class="pg-t">📊 Дашборд</div><div class="pg-s">Общая аналитика</div></div>
+  <div class="stats" id="dash-stats">
+    <div class="sc"><div class="sc-ic">👥</div><div class="sc-v" id="ds-users">—</div><div class="sc-l">Игроков</div></div>
+    <div class="sc"><div class="sc-ic">💰</div><div class="sc-v" id="ds-deps">—</div><div class="sc-l">Депозитов (ожид.)</div></div>
+    <div class="sc"><div class="sc-ic">💸</div><div class="sc-v" id="ds-withs">—</div><div class="sc-l">Выводов (ожид.)</div></div>
+    <div class="sc"><div class="sc-ic">💬</div><div class="sc-v" id="ds-msgs">—</div><div class="sc-l">Новых сообщений</div></div>
+    <div class="sc"><div class="sc-ic">⚽</div><div class="sc-v" id="ds-sbets">—</div><div class="sc-l">Ставки спорт (ожид.)</div></div>
+    <div class="sc"><div class="sc-ic">🏆</div><div class="sc-v" id="ds-bw">—</div><div class="sc-l">Крупных выигрышей</div></div>
+  </div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🚨</div><div class="ct">ТРЕБУЮТ ДЕЙСТВИЙ</div></div></div>
+  <div class="cb" id="action-list"></div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🎰</div><div class="ct">БОЛЬШИЕ ВЫИГРЫШИ</div></div></div>
+  <div class="tw"><table><thead><tr><th>Игрок</th><th>Игра</th><th>Ставка</th><th>×</th><th>Выигрыш</th><th>Время</th></tr></thead><tbody id="bw-tbl"></tbody></table></div></div>
+</div>
+
+<!-- DEPOSITS -->
+<div class="pg" id="pg-deposits">
+  <div class="pg-hd"><div class="pg-t">💳 Депозиты</div><div class="pg-s">Все заявки на пополнение</div></div>
+  <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="ab ab-a on" onclick="filterDeps('all',this)">Все</button>
+    <button class="ab ab-y" onclick="filterDeps('awaiting_card',this)">Ожидает реквизитов</button>
+    <button class="ab ab-a" onclick="filterDeps('pending',this)">Ожидает</button>
+    <button class="ab ab-g" onclick="filterDeps('confirmed',this)">Подтверждены</button>
+    <button class="ab ab-r" onclick="filterDeps('rejected',this)">Отклонены</button>
+  </div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>Время</th><th>Пользователь</th><th>Метод</th><th>Сумма</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody id="dep-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- WITHDRAWALS -->
+<div class="pg" id="pg-withdrawals">
+  <div class="pg-hd"><div class="pg-t">💸 Выводы</div><div class="pg-s">Заявки на вывод</div></div>
+  <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="ab ab-a on" onclick="filterWiths('all',this)">Все</button>
+    <button class="ab ab-y" onclick="filterWiths('pending',this)">Ожидают</button>
+    <button class="ab ab-g" onclick="filterWiths('paid',this)">Выплачены</button>
+    <button class="ab ab-r" onclick="filterWiths('rejected',this)">Отклонены</button>
+  </div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>Время</th><th>Пользователь</th><th>Метод/Адрес</th><th>Сумма</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody id="wth-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- USERS -->
+<div class="pg" id="pg-users">
+  <div class="pg-hd"><div class="pg-t">👥 Игроки</div><div class="pg-s">Управление пользователями</div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🔍</div><div class="ct">ПОИСК</div></div></div>
+  <div class="cb"><div style="display:flex;gap:7px">
+    <input id="usr-search" type="text" style="flex:1;background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px 10px;color:var(--tx);font-family:var(--f);font-size:12px;outline:none" placeholder="Поиск по имени, email, ID..." oninput="searchUsers(this.value)">
+    <button class="ab ab-a" onclick="loadUsers()">Все</button>
+  </div></div></div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Баланс</th><th>Ставок</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody id="usr-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- SUPPORT -->
+<div class="pg" id="pg-support">
+  <div class="pg-hd"><div class="pg-t">💬 Чат поддержки</div><div class="pg-s">Диалоги с пользователями</div></div>
+  <div style="display:flex;gap:10px;height:calc(100vh - 160px)">
+    <div style="width:220px;flex-shrink:0;background:var(--sur);border:1px solid var(--b1);border-radius:12px;overflow-y:auto">
+      <div style="padding:9px 10px;border-bottom:1px solid var(--b1);font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1px">Диалоги</div>
+      <div id="chat-list"></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;background:var(--sur);border:1px solid var(--b1);border-radius:12px;overflow:hidden">
+      <div id="chat-hd" style="padding:10px 14px;border-bottom:1px solid var(--b1);font-size:12px;font-weight:700;color:var(--tx)">Выбери диалог</div>
+      <div id="chat-msgs" class="chat-msgs" style="flex:1;border:none;border-radius:0;max-height:none;background:transparent"></div>
+      <div id="chat-inp-area" style="padding:10px;border-top:1px solid var(--b1);background:var(--sur2);display:none">
+        <div class="chat-inp-r">
+          <textarea class="chat-inp" id="admin-chat-inp" rows="2" placeholder="Ответить пользователю..."></textarea>
+          <button class="chat-send" onclick="adminSendMsg()">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPORT MATCHES -->
+<div class="pg" id="pg-sport">
+  <div class="pg-hd"><div class="pg-t">⚽ Матчи</div><div class="pg-s">Управление матчами и коэффициентами</div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">➕</div><div class="ct">ДОБАВИТЬ МАТЧ</div></div></div>
+  <div class="cb">
+    <div class="sf sf-2" style="margin-bottom:10px">
+      <div class="fi"><label>Лига / Турнир</label><input id="sm-league" type="text" placeholder="Лига 1, UEFA..."></div>
+      <div class="fi"><label>Команда 1</label><input id="sm-t1" type="text" placeholder="Команда 1"></div>
+      <div class="fi"><label>Команда 2</label><input id="sm-t2" type="text" placeholder="Команда 2"></div>
+      <div class="fi"><label>Дата</label><input id="sm-date" type="date"></div>
+      <div class="fi"><label>Время</label><input id="sm-time" type="time"></div>
+      <div class="fi"><label>Статус</label>
+        <select id="sm-status" style="background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--f);font-size:12px;outline:none">
+          <option value="upcoming">📅 Предстоящий</option>
+          <option value="live">🔴 Лайв</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">КОЭФФИЦИЕНТЫ</div>
+      <div class="odds-grid">
+        <div><div class="odds-lbl">П1 (победа 1)</div><input class="odds-inp" id="sm-o1" type="number" step="0.01" min="1" value="1.85" placeholder="1.85"></div>
+        <div><div class="odds-lbl">Ничья</div><input class="odds-inp" id="sm-ox" type="number" step="0.01" min="1" value="3.20" placeholder="3.20"></div>
+        <div><div class="odds-lbl">П2 (победа 2)</div><input class="odds-inp" id="sm-o2" type="number" step="0.01" min="1" value="3.90" placeholder="3.90"></div>
+      </div>
+    </div>
+    <button class="btn-save" onclick="addMatch()">➕ ДОБАВИТЬ МАТЧ</button>
+  </div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">📋</div><div class="ct">ТЕКУЩИЕ МАТЧИ</div></div><button class="ab ab-r" onclick="clearAllMatches()">🗑 Очистить все</button></div>
+  <div class="tw"><table>
+    <thead><tr><th>Лига</th><th>Матч</th><th>Дата</th><th>Коэфф.</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody id="matches-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- SPORT BETS (PENDING) -->
+<div class="pg" id="pg-sportbets">
+  <div class="pg-hd"><div class="pg-t">📋 Ставки на спорт</div><div class="pg-s">Управление ставками — зачисляй победы вручную</div></div>
+  <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="ab ab-a on" onclick="filterSportBets('all',this)">Все</button>
+    <button class="ab ab-y" onclick="filterSportBets('pending',this)">Ожидают</button>
+    <button class="ab ab-g" onclick="filterSportBets('won',this)">Выиграли</button>
+    <button class="ab ab-r" onclick="filterSportBets('lost',this)">Проиграли</button>
+  </div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>Время</th><th>Игрок</th><th>Ставка</th><th>Коэфф.</th><th>Возможный выигрыш</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody id="sbets-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="pg" id="pg-lb">
+  <div class="pg-hd"><div class="pg-t">🏆 Лидерборд</div><div class="pg-s">Рейтинг и призы</div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🏆</div><div class="ct">ПРИЗЫ ЗА МЕСТА 1–10</div></div></div>
+  <div class="cb">
+    <div class="sw-row"><div><div class="sw-l">Призы включены</div><div class="sw-s">Выплачиваются вручную</div></div><label class="tog"><input type="checkbox" id="lb-enabled" checked><span class="tog-s"></span></label></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:12px 0">
+      <div class="fi"><label>🥇 Место 1</label><input id="lb-p1" type="number" min="0" placeholder="10000"></div>
+      <div class="fi"><label>🥈 Место 2</label><input id="lb-p2" type="number" min="0" placeholder="5000"></div>
+      <div class="fi"><label>🥉 Место 3</label><input id="lb-p3" type="number" min="0" placeholder="3000"></div>
+      <div class="fi"><label>4 место</label><input id="lb-p4" type="number" min="0" placeholder="2000"></div>
+      <div class="fi"><label>5 место</label><input id="lb-p5" type="number" min="0" placeholder="1500"></div>
+      <div class="fi"><label>6 место</label><input id="lb-p6" type="number" min="0" placeholder="1000"></div>
+      <div class="fi"><label>7 место</label><input id="lb-p7" type="number" min="0" placeholder="800"></div>
+      <div class="fi"><label>8 место</label><input id="lb-p8" type="number" min="0" placeholder="600"></div>
+      <div class="fi"><label>9 место</label><input id="lb-p9" type="number" min="0" placeholder="400"></div>
+      <div class="fi"><label>10 место</label><input id="lb-p10" type="number" min="0" placeholder="200"></div>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn-save" onclick="saveLbPrizes()">💾 СОХРАНИТЬ ПРИЗЫ</button>
+      <button class="ab ab-y" onclick="awardAllPrizes()">🏆 Выдать всем (1–10)</button>
+      <button class="ab ab-r" onclick="resetLb()">↺ Сбросить рейтинг</button>
+    </div>
+  </div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🤖</div><div class="ct">УПРАВЛЕНИЕ ОБОРОТОМ БОТОВ</div></div><button class="ab ab-y" onclick="randomizeBots()">🎲 Рандомизировать</button></div>
+  <div class="cb">
+    <div class="sf-inline" style="margin-bottom:10px">
+      <div class="fi" style="flex:1"><label>Выбери бота</label><select id="bot-sel" onchange="onBotSel()" style="background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--f);font-size:12px;outline:none;width:100%"></select></div>
+      <div class="fi" style="width:140px"><label>Оборот (₽)</label><input id="bot-to" type="number" min="0" placeholder="50000"></div>
+      <button class="btn-save" style="align-self:flex-end;white-space:nowrap" onclick="saveBotTurnover()">💾</button>
+    </div>
+    <button class="ab ab-r" onclick="resetAllBots()">↺ Сбросить всех ботов</button>
+  </div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">📋</div><div class="ct">РЕЙТИНГ</div></div></div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Игрок</th><th>Тип</th><th>Оборот</th><th>Приз</th><th>Действия</th></tr></thead>
+    <tbody id="lb-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- PROMOS -->
+<div class="pg" id="pg-promos">
+  <div class="pg-hd"><div class="pg-t">🎁 Промокоды</div><div class="pg-s">Создание и управление промокодами</div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">➕</div><div class="ct">СОЗДАТЬ ПРОМОКОД</div></div></div>
+  <div class="cb">
+    <div class="sf sf-2" style="margin-bottom:10px">
+      <div class="fi"><label>Код</label><input id="pr-code" type="text" placeholder="BONUS100" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'')"></div>
+      <div class="fi"><label>Тип</label>
+        <select id="pr-type" style="background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--f);font-size:12px;outline:none">
+          <option value="balance">💰 На реальный баланс</option>
+          <option value="bonus">🎁 Бонус (с отыгрышем)</option>
+        </select>
+      </div>
+      <div class="fi"><label>Сумма (₽)</label><input id="pr-amt" type="number" min="1" placeholder="1000"></div>
+      <div class="fi"><label>Множитель отыгрыша (для бонуса)</label><input id="pr-wager" type="number" min="1" max="50" placeholder="3"></div>
+      <div class="fi"><label>Срок действия</label><input id="pr-exp" type="date"></div>
+      <div class="fi"><label>Описание</label><input id="pr-desc" type="text" placeholder="Промокод выходного дня"></div>
+    </div>
+    <button class="btn-save" onclick="createPromo()">➕ СОЗДАТЬ</button>
+  </div></div>
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">📋</div><div class="ct">АКТИВНЫЕ ПРОМОКОДЫ</div></div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Код</th><th>Тип</th><th>Сумма</th><th>Использований</th><th>Срок</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody id="promo-tbl"></tbody>
+  </table></div></div>
+</div>
+
+<!-- BIG WINS -->
+<div class="pg" id="pg-bigwins">
+  <div class="pg-hd"><div class="pg-t">🎰 Крупные выигрыши</div></div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>Время</th><th>Игрок</th><th>Игра</th><th>Ставка</th><th>Коэфф.</th><th>Выигрыш</th></tr></thead>
+    <tbody id="bw-tbl2"></tbody>
+  </table></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="pg" id="pg-settings">
+  <div class="pg-hd"><div class="pg-t">⚙️ Настройки</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+  <!-- General -->
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🎰</div><div class="ct">ОБЩИЕ</div></div></div>
+  <div class="cb"><div class="sf">
+    <div class="fi"><label>Название сайта</label><input id="s-name" type="text" placeholder="CrashX"></div>
+    <div class="fi"><label>Мин. ставка (₽)</label><input id="s-minbet" type="number" min="1"></div>
+    <div class="fi"><label>Макс. ставка (₽)</label><input id="s-maxbet" type="number" min="1"></div>
+    <div class="fi"><label>Мин. депозит (₽)</label><input id="s-mindep" type="number" min="1"></div>
+    <div class="fi"><label>Мин. вывод (₽)</label><input id="s-minwth" type="number" min="1"></div>
+    <div class="fi"><label>Курс USDT→₽</label><input id="s-usdt" type="number" step="0.1" min="1"></div>
+    <button class="btn-save" onclick="saveSettings('general')">💾 СОХРАНИТЬ</button>
+  </div></div></div>
+
+  <!-- Crash Settings -->
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">🚀</div><div class="ct">КРАШ</div></div></div>
+  <div class="cb"><div class="sf">
+    <div class="crash-ctrl">
+      <div class="crash-ctrl-t">⚠️ ПРОВАБЛ-ФЭЙР</div>
+      <div class="fi"><label>House Edge % (шанс раннего краша)</label><input id="s-hedge" type="number" step="0.1" min="1" max="30" placeholder="5"></div>
+      <div class="fi"><label>Макс. множитель (×)</label><input id="s-maxm" type="number" min="2" max="1000" placeholder="100"></div>
+    </div>
+    <div class="crash-ctrl" style="border-color:rgba(255,69,102,.2);background:rgba(255,69,102,.04)">
+      <div class="crash-ctrl-t" style="color:var(--red)">🔴 ПРИНУДИТЕЛЬНЫЙ КРАШ</div>
+      <div class="fi"><label>Принудительный краш на (× / 0 = выкл)</label><input id="s-force-crash" type="number" step="0.01" min="0" placeholder="0 — выключено"></div>
+      <div class="hint">Следующий раунд упадёт на этом значении. Автоматически сбрасывается.</div>
+    </div>
+    <button class="btn-save" onclick="saveSettings('crash')">💾 СОХРАНИТЬ</button>
+  </div></div></div>
+
+  <!-- Addresses -->
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">💎</div><div class="ct">АДРЕСА КРИПТО</div></div></div>
+  <div class="cb"><div class="sf">
+    <div class="fi"><label>USDT TRC-20</label><input id="s-usdt_trc20" type="text" placeholder="TRX адрес..."></div>
+    <div class="fi"><label>USDT ERC-20</label><input id="s-usdt_erc20" type="text" placeholder="ETH адрес..."></div>
+    <div class="fi"><label>Bitcoin (BTC)</label><input id="s-btc" type="text" placeholder="BTC адрес..."></div>
+    <div class="fi"><label>Ethereum (ETH)</label><input id="s-eth" type="text" placeholder="ETH адрес..."></div>
+    <div class="fi"><label>Litecoin (LTC)</label><input id="s-ltc" type="text" placeholder="LTC адрес..."></div>
+    <button class="btn-save" onclick="saveSettings('addresses')">💾 СОХРАНИТЬ</button>
+  </div></div></div>
+
+  <!-- Support & Referral -->
+  <div class="card"><div class="ch"><div class="ch-l"><div class="ci">💬</div><div class="ct">ПОДДЕРЖКА</div></div></div>
+  <div class="cb"><div class="sf">
+    <div class="sw-row"><div><div class="sw-l">Поддержка онлайн</div></div><label class="tog"><input type="checkbox" id="s-online"><span class="tog-s"></span></label></div>
+    <div class="fi"><label>Авто-ответ</label><textarea id="s-autoreply" placeholder="Мы ответим в ближайшее время..."></textarea></div>
+    <div class="fi"><label>Реферальный % за депозит</label><input id="s-ref" type="number" min="0" max="30" placeholder="10"></div>
+    <div class="fi"><label>VIP — ежедневный бонус (₽)</label><input id="s-vip-daily" type="number" min="0" placeholder="500"></div>
+    <button class="btn-save" onclick="saveSettings('support')">💾 СОХРАНИТЬ</button>
+  </div></div></div>
+
+  <!-- Announcement -->
+  <div class="card" style="grid-column:1/-1"><div class="ch"><div class="ch-l"><div class="ci">📢</div><div class="ct">ОБЪЯВЛЕНИЕ</div></div></div>
+  <div class="cb"><div class="sf">
+    <div class="fi"><label>Текст объявления</label><textarea id="s-ann" rows="2"></textarea></div>
+    <div class="sw-row"><div><div class="sw-l">Показывать объявление</div></div><label class="tog"><input type="checkbox" id="s-ann-on"><span class="tog-s"></span></label></div>
+    <div class="sw-row"><div><div class="sw-l">Режим техобслуживания</div><div class="sw-s">Сайт недоступен для игроков</div></div><label class="tog"><input type="checkbox" id="s-maint"><span class="tog-s"></span></label></div>
+    <div class="fi"><label>Текст при техобслуживании</label><input id="s-maint-msg" type="text" placeholder="Технические работы. Скоро вернёмся!"></div>
+    <button class="btn-save" onclick="saveSettings('ann')">💾 СОХРАНИТЬ</button>
+  </div></div></div>
+
+  <!-- Colors -->
+  <div class="card" style="grid-column:1/-1"><div class="ch"><div class="ch-l"><div class="ci">🎨</div><div class="ct">ЦВЕТА САЙТА</div></div></div>
+  <div class="cb"><div class="sf" style="grid-template-columns:repeat(3,1fr)">
+    <div class="fi"><label>Акцент (основной)</label><input id="c-acc" type="color" value="#00d4ff"></div>
+    <div class="fi"><label>Акцент (вторичный)</label><input id="c-acc2" type="color" value="#005fff"></div>
+    <div class="fi"><label>Фон сайта</label><input id="c-bg" type="color" value="#07090e"></div>
+    <div class="fi"><label>Поверхность</label><input id="c-sur" type="color" value="#0c1118"></div>
+    <div class="fi"><label>Текст</label><input id="c-tx" type="color" value="#d4e8f8"></div>
+    <div class="fi"><label>Текст 2</label><input id="c-tx2" type="color" value="#6e95b0"></div>
+  </div>
+  <div style="margin-top:9px;display:flex;gap:7px">
+    <button class="btn-save" onclick="saveSettings('colors')">💾 СОХРАНИТЬ ЦВЕТА</button>
+    <button class="ab ab-a" onclick="resetColors()">↺ Сброс</button>
+  </div></div></div>
+
+  <!-- Luck override -->
+  <div class="card" style="grid-column:1/-1"><div class="ch"><div class="ch-l"><div class="ci">🎲</div><div class="ct">УДАЧА ДЛЯ ОДИНОЧНЫХ ИГР (Мины / Кости / Hi-Low / 21)</div></div></div>
+  <div class="cb">
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.6">Настрой «удачу» конкретного игрока в одиночных играх. 0 = стандартный шанс, 100 = всегда выигрывает, -100 = всегда проигрывает.</div>
+    <div class="sf-inline">
+      <div class="fi" style="flex:2"><label>UID игрока</label><input id="luck-uid" type="text" placeholder="uid игрока"></div>
+      <div class="fi" style="width:100px"><label>Удача (-100..100)</label><input id="luck-val" type="number" min="-100" max="100" placeholder="0"></div>
+      <button class="btn-save" style="align-self:flex-end" onclick="setLuckOverride()">ПРИМЕНИТЬ</button>
+    </div>
+    <div id="luck-list" style="margin-top:10px"></div>
+  </div></div>
+
+  </div><!-- end grid -->
+</div>
+
+</div><!-- main -->
+</div><!-- layout -->
+
+<!-- MODAL: USER -->
+<div class="mov" id="m-user"><div class="modal">
+  <button class="mcl" onclick="closeM('user')">✕</button>
+  <div class="m-ttl" id="mu-title">Пользователь</div>
+  <div class="u-info-grid" id="mu-info"></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+    <button class="ab ab-g" onclick="adjBalance(1)">+ Баланс</button>
+    <button class="ab ab-r" onclick="adjBalance(-1)">- Баланс</button>
+    <button class="ab ab-a" onclick="giveBonusDlg()">🎁 Бонус</button>
+    <button class="ab ab-y" onclick="makeVip()">👑 VIP</button>
+    <button class="ab ab-r" onclick="toggleBan()">⛔ Бан/Разбан</button>
+    <button class="ab ab-p" onclick="giveFreeBet()">⚽ Фрибет</button>
+  </div>
+  <div class="fi sf-inline" style="margin-bottom:10px">
+    <input id="mu-adj-amt" type="number" placeholder="Сумма" style="width:130px">
+    <input id="mu-adj-note" type="text" placeholder="Причина" style="flex:1">
+  </div>
+  <div style="font-size:10px;color:var(--tx2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">ИСТОРИЯ ТРАНЗАКЦИЙ</div>
+  <div id="mu-hist" style="max-height:200px;overflow-y:auto;font-size:10px"></div>
+</div></div>
+
+<!-- MODAL: CARD DEPOSIT -->
+<div class="mov" id="m-card"><div class="modal">
+  <button class="mcl" onclick="closeM('card')">✕</button>
+  <div class="m-ttl">💳 Отправить реквизиты</div>
+  <div id="cc-dep-info" style="background:var(--sur2);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:var(--tx2)"></div>
+  <div class="fi" style="margin-bottom:7px"><label>Номер карты</label><input id="cc-card-num" type="text" placeholder="0000 0000 0000 0000"></div>
+  <div class="fi" style="margin-bottom:7px"><label>Имя владельца (необязательно)</label><input id="cc-holder" type="text" placeholder="IVAN PETROV"></div>
+  <div class="fi" style="margin-bottom:10px"><label>Сумма (₽)</label><input id="cc-amt" type="number" min="1"></div>
+  <button class="btn-save" style="width:100%" onclick="confirmCardDep()">✅ ОТПРАВИТЬ РЕКВИЗИТЫ</button>
+</div></div>
+
+<!-- MODAL: DEPOSIT CONFIRM -->
+<div class="mov" id="m-dep"><div class="modal">
+  <button class="mcl" onclick="closeM('dep')">✕</button>
+  <div class="m-ttl">💳 Подтвердить депозит</div>
+  <div id="dep-modal-info" style="font-size:11px;color:var(--tx2);margin-bottom:12px;line-height:1.7"></div>
+  <button class="btn-save" style="width:100%;margin-bottom:8px" onclick="confirmDep(true)">✅ ПОДТВЕРДИТЬ — ЗАЧИСЛИТЬ</button>
+  <button class="btn-danger" style="width:100%" onclick="confirmDep(false)">❌ ОТКЛОНИТЬ</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// Конфиг Firebase и ADMIN_CREDS загружаются из firebase-config.js
+
+// ═══════════════════ STATE ═══════════════════
+let CFG = {};
+let _curUser = null;   // selected user for modal
+let _curDepKey = null; // deposit key for modal
+let _curChatUid = null; // chat uid
+let _depFilter = 'all';
+let _wthFilter = 'all';
+let _sbetFilter = 'all';
+let _allDeps = [];
+let _allWiths = [];
+let _allSBets = [];
+let _luckOverrides = {};
+
+// ═══════════════════ LOGIN ═══════════════════
+function doLogin() {
+  const l = document.getElementById('l-login').value.trim();
+  const p = document.getElementById('l-pw').value;
+  const ok = ADMIN_CREDS.some(c => c.login === l && c.password === p);
+  if (!ok) { document.getElementById('l-err').textContent = 'Неверные данные'; return; }
+  sessionStorage.setItem('cx_admin', '1');
+  document.getElementById('sb-user').textContent = l;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  initAdmin();
+}
+function logout() { sessionStorage.removeItem('cx_admin'); location.reload(); }
+
+// ═══════════════════ INIT ═══════════════════
+function initAdmin() {
+  // Listen config
+  db.ref('config').on('value', s => {
+    CFG = s.val() || {};
+    loadSettings();
+    updateBadges();
+    loadLuckList();
+  });
+  // Listen deposits
+  db.ref('deposits').orderByChild('ts').on('value', s => {
+    const v = s.val();
+    _allDeps = v ? Object.entries(v).map(([k,d])=>({_key:k,...d})).sort((a,b)=>b.ts-a.ts) : [];
+    const pending = _allDeps.filter(d => d.status==='awaiting_card'||d.status==='pending').length;
+    const badge = document.getElementById('dep-badge');
+    badge.textContent = pending; badge.style.display = pending ? 'inline' : 'none';
+    if (document.getElementById('pg-deposits').classList.contains('on')) renderDeps();
+    renderActionList();
+    updateDashStats();
+  });
+  // Listen withdrawals
+  db.ref('withdrawals').orderByChild('ts').on('value', s => {
+    const v = s.val();
+    _allWiths = v ? Object.entries(v).map(([k,w])=>({_key:k,...w})).sort((a,b)=>b.ts-a.ts) : [];
+    const pending = _allWiths.filter(w => w.status==='pending').length;
+    const badge = document.getElementById('wth-badge');
+    badge.textContent = pending; badge.style.display = pending ? 'inline' : 'none';
+    if (document.getElementById('pg-withdrawals').classList.contains('on')) renderWiths();
+    renderActionList();
+    updateDashStats();
+  });
+  // Listen sport bets
+  db.ref('sportbets').on('value', s => {
+    const v = s.val(); const all = [];
+    if (v) Object.entries(v).forEach(([uid, bets]) => { Object.entries(bets).forEach(([k, b]) => all.push({_key:k,_uid:uid,...b})); });
+    _allSBets = all.sort((a,b)=>b.ts-a.ts);
+    const pending = _allSBets.filter(b=>b.status==='pending').length;
+    if (document.getElementById('pg-sportbets').classList.contains('on')) renderSportBets();
+    document.getElementById('ds-sbets').textContent = pending;
+  });
+  // Big wins
+  db.ref('bigwins').limitToLast(20).on('value', s => {
+    const v = s.val(); const bw = v ? Object.values(v).sort((a,b)=>b.ts-a.ts) : [];
+    renderBigWins(bw); document.getElementById('ds-bw').textContent = bw.length;
+  });
+  // Messages badge
+  db.ref('messages').on('value', s => {
+    const v = s.val(); let unread = 0;
+    if (v) Object.values(v).forEach(msgs => { Object.values(msgs).forEach(m => { if (!m.fromAdmin && !m.readByAdmin) unread++; }); });
+    const badge = document.getElementById('msg-badge');
+    badge.style.display = unread ? 'inline' : 'none';
+    document.getElementById('ds-msgs').textContent = unread;
+    if (document.getElementById('pg-support').classList.contains('on')) loadChatList();
+  });
+  // Leaderboard
+  db.ref('leaderboard').orderByChild('turnover').on('value', renderLbTable);
+  // Promos
+  db.ref('config/promoCodes').on('value', () => { if (document.getElementById('pg-promos').classList.contains('on')) renderPromos(); });
+  // Users count
+  db.ref('users').on('value', s => {
+    const v = s.val(); document.getElementById('ds-users').textContent = v ? Object.keys(v).length : 0;
+    if (document.getElementById('pg-users').classList.contains('on')) renderUsers(v);
+  });
+  // Check session
+  if (!sessionStorage.getItem('cx_admin')) { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('app').style.display = 'none'; }
+  populateBotSel();
+}
+
+// ═══════════════════ NAV ═══════════════════
+function nav(n, el) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.si').forEach(s => s.classList.remove('on'));
+  document.getElementById('pg-' + n)?.classList.add('on');
+  if (el) el.classList.add('on');
+  if (n === 'deposits') renderDeps();
+  if (n === 'withdrawals') renderWiths();
+  if (n === 'users') loadUsers();
+  if (n === 'support') loadChatList();
+  if (n === 'sport') renderMatches();
+  if (n === 'sportbets') renderSportBets();
+  if (n === 'lb') { loadLbPrizes(); renderLbTable(); populateBotSel(); }
+  if (n === 'promos') renderPromos();
+  if (n === 'settings') loadSettings();
+}
+
+// ═══════════════════ UTILS ═══════════════════
+function fmt(n) { return (+n||0).toLocaleString('ru',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtD(ts) { return new Date(ts).toLocaleString('ru',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'>'); }
+function toast(msg, type='info') { const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+(type||'info'); if(window._tt)clearTimeout(window._tt); window._tt=setTimeout(()=>el.classList.remove('show'),3000); }
+function openM(n) { document.getElementById('m-'+n)?.classList.add('show'); }
+function closeM(n) { document.getElementById('m-'+n)?.classList.remove('show'); }
+document.querySelectorAll('.mov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o){const n=o.id.replace('m-','');closeM(n);}}));
+
+function updateBadges() {}
+function updateDashStats() {
+  document.getElementById('ds-deps').textContent = _allDeps.filter(d=>d.status==='awaiting_card'||d.status==='pending').length;
+  document.getElementById('ds-withs').textContent = _allWiths.filter(w=>w.status==='pending').length;
+}
+
+// ═══════════════════ ACTION LIST ═══════════════════
+function renderActionList() {
+  const el = document.getElementById('action-list'); if(!el) return;
+  const actions = [];
+  _allDeps.filter(d=>d.status==='awaiting_card').forEach(d => actions.push({ ico:'💳', text:'Запрос реквизитов от ' + (d.uname||'—') + ' на ' + fmt(d.amount) + '₽', btn:'Отправить', fn:`openCardModal('${d._key}')` }));
+  _allDeps.filter(d=>d.status==='pending'&&d.method!=='card').forEach(d => actions.push({ ico:'💰', text:'Депозит ' + (d.uname||'—') + ' · ' + fmt(d.amount||0) + '₽ · ' + (d.crypto||d.method||'—'), btn:'Обработать', fn:`openDepModal('${d._key}')` }));
+  _allWiths.filter(w=>w.status==='pending').forEach(w => actions.push({ ico:'💸', text:'Вывод ' + (w.username||'—') + ' · ' + fmt(w.amount) + '₽ → ' + (w.addr||'—'), btn:'Выплатить', fn:`payWith('${w._key}')` }));
+  if (!actions.length) { el.innerHTML='<div style="padding:12px;color:var(--mu);font-size:11px;text-align:center">Всё обработано ✅</div>'; return; }
+  el.innerHTML = actions.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:16px">${a.ico}</span><span style="flex:1;font-size:11px;color:var(--tx)">${esc(a.text)}</span><button class="ab ab-y" onclick="${a.fn}">${a.btn}</button></div>`).join('');
+}
+
+// ═══════════════════ DEPOSITS ═══════════════════
+function filterDeps(f, el) {
+  _depFilter = f;
+  document.querySelectorAll('#pg-deposits .ab').forEach(b=>b.classList.remove('on')); el.classList.add('on');
+  renderDeps();
+}
+function renderDeps() {
+  const rows = _depFilter === 'all' ? _allDeps : _allDeps.filter(d=>d.status===_depFilter);
+  const sm = { pending:{b:'by_',l:'⏳ Ожидает'}, awaiting_card:{b:'bp_',l:'💳 Ждёт реквизитов'}, confirmed:{b:'bg_',l:'✅ Подтверждён'}, rejected:{b:'br_',l:'❌ Отклонён'}, crypto_sent:{b:'ba_',l:'💎 Крипто отправлена'} };
+  document.getElementById('dep-tbl').innerHTML = rows.length ? rows.map(d=>{
+    const s = sm[d.status]||{b:'ba_',l:d.status||'—'};
+    const isCard = d.method==='card';
+    const isCrypto = d.method==='crypto';
+    const btns = [];
+    if (d.status==='awaiting_card') btns.push(`<button class="ab ab-y" onclick="openCardModal('${d._key}')">💳 Реквизиты</button>`);
+    if (d.status==='pending') btns.push(`<button class="ab ab-g" onclick="openDepModal('${d._key}')">✅ Подтвердить</button>`);
+    if (d.status==='pending'||d.status==='awaiting_card') btns.push(`<button class="ab ab-r" onclick="quickRejectDep('${d._key}')">❌</button>`);
+    return `<tr><td style="color:var(--mu);font-size:9px">${fmtD(d.ts)}</td><td><b>${esc(d.uname||'—')}</b><br><span style="font-size:9px;color:var(--mu)">${d.uid||''}</span></td>
+    <td>${isCard?'💳 Карта':isCrypto?'💎 '+(d.crypto||'').toUpperCase():'—'}</td>
+    <td style="font-family:var(--F);font-size:13px;font-weight:700;color:var(--yel)">${fmt(d.amount||0)} ₽</td>
+    <td><span class="badge ${s.b}">${s.l}</span></td>
+    <td><div class="ab-wrap">${btns.join('')}</div></td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="te">Нет депозитов</td></tr>';
+}
+
+let _depModalKey = null;
+function openDepModal(key) {
+  const dep = _allDeps.find(d=>d._key===key); if(!dep) return;
+  _depModalKey = key;
+  document.getElementById('dep-modal-info').innerHTML = `<b>${esc(dep.uname||'—')}</b><br>Метод: ${dep.method==='card'?'💳 Карта':('💎 '+(dep.crypto||'').toUpperCase())}<br>Сумма: <b style="color:var(--yel)">${fmt(dep.amount||0)} ₽</b><br>ID: ${dep.depId||dep._key}<br>Время: ${fmtD(dep.ts)}`;
+  openM('dep');
+}
+function confirmDep(ok) {
+  if (!_depModalKey) return;
+  const dep = _allDeps.find(d=>d._key===_depModalKey); if(!dep) return;
+  if (ok) {
+    // Credit user
+    db.ref('users/'+dep.uid).once('value', s => {
+      const u = s.val(); if(!u) { toast('Пользователь не найден','err'); return; }
+      const nb = (u.balance||0)+(dep.amount||0);
+      db.ref('users/'+dep.uid).update({ balance: nb });
+      db.ref('txs/'+dep.uid).push({ type:'deposit', amount:dep.amount||0, desc:'Депозит подтверждён '+fmt(dep.amount||0)+'₽', ts:Date.now() });
+      addNtf(dep.uid, { icon:'💰', title:'Депозит зачислен!', text:'+'+fmt(dep.amount||0)+'₽ на баланс.' });
+      // Referral bonus
+      if (u.refBy && (CFG.refPercent||10) > 0) {
+        const refAmt = +((dep.amount||0)*(CFG.refPercent||10)/100).toFixed(2);
+        db.ref('users/'+u.refBy).once('value', sr => {
+          const ru = sr.val(); if(!ru) return;
+          db.ref('users/'+u.refBy).update({ balance:(ru.balance||0)+refAmt, refEarned:(ru.refEarned||0)+refAmt });
+          db.ref('txs/'+u.refBy).push({ type:'ref_bonus', amount:refAmt, desc:'Рефбонус от '+u.name+' · '+fmt(refAmt)+'₽', ts:Date.now() });
+          addNtf(u.refBy, { icon:'🤝', title:'Рефбонус!', text:'+'+fmt(refAmt)+'₽ от реферала '+u.name });
+        });
+      }
+    });
+    db.ref('deposits/'+_depModalKey).update({ status:'confirmed', confirmedAt:Date.now() });
+    toast('Депозит подтверждён, баланс зачислен!','ok');
+  } else {
+    db.ref('deposits/'+_depModalKey).update({ status:'rejected' });
+    toast('Депозит отклонён','info');
+  }
+  closeM('dep'); _depModalKey = null;
+}
+function quickRejectDep(key) { if(!confirm('Отклонить заявку?'))return; db.ref('deposits/'+key).update({status:'rejected'}); toast('Отклонено','info'); }
+
+let _ccDepKey = null;
+function openCardModal(key) {
+  const dep = _allDeps.find(d=>d._key===key); if(!dep) return;
+  _ccDepKey = key;
+  document.getElementById('cc-dep-info').innerHTML = `Игрок: <b>${esc(dep.uname||'—')}</b><br>Сумма: <b style="color:var(--yel)">${fmt(dep.amount||0)} ₽</b>`;
+  document.getElementById('cc-amt').value = dep.amount||0;
+  document.getElementById('cc-card-num').value = ''; document.getElementById('cc-holder').value = '';
+  openM('card');
+}
+function confirmCardDep() {
+  const cardNum = document.getElementById('cc-card-num').value.trim();
+  const holder = document.getElementById('cc-holder').value.trim();
+  const amt = parseFloat(document.getElementById('cc-amt').value);
+  if (!cardNum) { toast('Введи номер карты','err'); return; }
+  if (!_ccDepKey) return;
+  const dep = _allDeps.find(d=>d._key===_ccDepKey);
+  db.ref('deposits/'+_ccDepKey).update({ cardNumber:cardNum, cardHolder:holder, amount:amt, status:'awaiting_card', cardSentAt:Date.now() });
+  // Notify user
+  if (dep?.uid) addNtf(dep.uid, { icon:'💳', title:'Реквизиты для оплаты', text:'Переведи '+fmt(amt)+'₽ на карту: '+cardNum+(holder?' ('+holder+')':'') });
+  closeM('card'); toast('Реквизиты отправлены игроку!','ok');
+}
+
+// ═══════════════════ WITHDRAWALS ═══════════════════
+function filterWiths(f, el) {
+  _wthFilter = f;
+  document.querySelectorAll('#pg-withdrawals .ab').forEach(b=>b.classList.remove('on')); el.classList.add('on');
+  renderWiths();
+}
+function renderWiths() {
+  const rows = _wthFilter==='all' ? _allWiths : _allWiths.filter(w=>w.status===_wthFilter);
+  const sm = { pending:{b:'by_',l:'⏳ Ожидает'}, approved:{b:'ba_',l:'✅ Одобрено'}, paid:{b:'bg_',l:'💸 Выплачено'}, rejected:{b:'br_',l:'❌ Отклонено'} };
+  document.getElementById('wth-tbl').innerHTML = rows.length ? rows.map(w=>{
+    const s = sm[w.status]||{b:'ba_',l:w.status||'—'};
+    const btns = [];
+    if (w.status==='pending') {
+      btns.push(`<button class="ab ab-g" onclick="payWith('${w._key}')">💸 Выплачено</button>`);
+      btns.push(`<button class="ab ab-r" onclick="rejectWith('${w._key}')">❌ Откл.</button>`);
+    }
+    return `<tr><td style="color:var(--mu);font-size:9px">${fmtD(w.ts)}</td><td><b>${esc(w.username||'—')}</b></td>
+    <td><div style="font-size:10px">${w.method==='card'?'💳 Карта':'💎 '+(w.crypto||'').toUpperCase()}</div><div style="font-size:9px;font-family:'Courier New',monospace;color:var(--mu);word-break:break-all;max-width:150px">${esc(w.addr||'—')}</div></td>
+    <td style="font-family:var(--F);font-size:13px;font-weight:700;color:var(--red)">${fmt(w.amount)} ₽</td>
+    <td><span class="badge ${s.b}">${s.l}</span></td>
+    <td><div class="ab-wrap">${btns.join('')}</div></td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="te">Нет заявок</td></tr>';
+}
+function payWith(key) {
+  const w = _allWiths.find(x=>x._key===key); if(!w) return;
+  if (!confirm('Отметить как выплаченный?\n'+w.username+' · '+fmt(w.amount)+'₽\n→ '+w.addr))return;
+  db.ref('withdrawals/'+key).update({ status:'paid', paidAt:Date.now() });
+  addNtf(w.uid, { icon:'💸', title:'Вывод выплачен!', text:'Твой вывод '+fmt(w.amount)+'₽ отправлен.' });
+  toast('Помечено как выплачено','ok');
+}
+function rejectWith(key) {
+  const w = _allWiths.find(x=>x._key===key); if(!w) return;
+  if (!confirm('Отклонить вывод и вернуть средства?'))return;
+  db.ref('withdrawals/'+key).update({ status:'rejected', rejectedAt:Date.now() });
+  db.ref('users/'+w.uid).once('value', s => {
+    const u = s.val(); if(!u) return;
+    db.ref('users/'+w.uid).update({ balance:(u.balance||0)+(w.amount||0) });
+    db.ref('txs/'+w.uid).push({ type:'deposit', amount:w.amount||0, desc:'Возврат: вывод отклонён', ts:Date.now() });
+    addNtf(w.uid, { icon:'🔄', title:'Вывод отклонён', text:'Заявка отклонена. '+fmt(w.amount||0)+'₽ возвращены на баланс.' });
+  });
+  toast('Отклонено, средства возвращены','ok');
+}
+
+// ═══════════════════ USERS ═══════════════════
+function loadUsers() {
+  db.ref('users').once('value', s => renderUsers(s.val()));
+}
+function renderUsers(v) {
+  if (!v) { document.getElementById('usr-tbl').innerHTML='<tr><td colspan="7" class="te">Нет пользователей</td></tr>'; return; }
+  const users = Object.entries(v).map(([id,u])=>({id,...u})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  document.getElementById('usr-tbl').innerHTML = users.map(u=>`<tr>
+    <td style="font-size:9px;font-family:'Courier New',monospace;color:var(--mu)">${u.id.slice(0,12)}...</td>
+    <td><b>${esc(u.name||'—')}</b>${u.vip?'<span class="badge bp_" style="margin-left:4px">👑VIP</span>':''}</td>
+    <td style="font-size:10px;color:var(--tx2)">${esc(u.email||u.username||'—')}</td>
+    <td style="font-family:var(--F);font-size:12px;font-weight:700;color:var(--grn)">${fmt(u.balance||0)}₽</td>
+    <td style="color:var(--tx2)">${u.totalBets||0}</td>
+    <td>${u.banned?'<span class="badge br_">⛔ Бан</span>':'<span class="badge bg_">✅</span>'}</td>
+    <td><button class="ab ab-a" onclick="openUser('${u.id}')">Открыть</button></td>
+  </tr>`).join('');
+}
+function searchUsers(q) {
+  if (!q) { loadUsers(); return; }
+  const s = q.toLowerCase();
+  db.ref('users').once('value', snap => {
+    const v = snap.val(); if(!v) return;
+    const filtered = {}; Object.entries(v).forEach(([id,u]) => { if ((u.name||'').toLowerCase().includes(s)||(u.email||'').toLowerCase().includes(s)||id.toLowerCase().includes(s)) filtered[id]=u; });
+    renderUsers(filtered);
+  });
+}
+function openUser(uid) {
+  db.ref('users/'+uid).once('value', s => {
+    const u = s.val(); if(!u) return;
+    _curUser = {...u, id: uid};
+    document.getElementById('mu-title').textContent = u.name || uid;
+    document.getElementById('mu-info').innerHTML = [
+      ['💰 Баланс', fmt(u.balance||0)+'₽'],['🎁 Бонус', fmt(u.bonusBalance||0)+'₽'],
+      ['📊 Ставок', u.totalBets||0],['🏆 Побед', u.totalWins||0],
+      ['💰 Выиграно', fmt(u.totalWon||0)+'₽'],['📈 Оборот', fmt(u.monthTurnover||0)+'₽'],
+      ['📧 Email', u.email||'—'],['🤝 Реф.код', u.refCode||'—'],
+      ['⚽ Фрибет', u.sportFreebet?fmt(u.sportFreebet)+'₽':'нет'],
+      ['🕐 Регистрация', fmtD(u.createdAt)],
+    ].map(([l,v])=>`<div class="u-info-item"><div class="u-info-l">${l}</div><div class="u-info-v">${esc(String(v))}</div></div>`).join('');
+    // Load txs
+    db.ref('txs/'+uid).limitToLast(30).once('value', ts => {
+      const tv = ts.val(); const txs = tv ? Object.values(tv).reverse() : [];
+      const tm = { bet_win:'✅ Выигрыш', bet_loss:'❌ Проигрыш', deposit:'💰 Депозит', withdrawal:'💸 Вывод', bonus:'🎁 Бонус', ref_bonus:'🤝 Рефбонус', sport_pending:'⚽ Спорт ставка', sport_win:'⚽ Спорт победа', sport_loss:'⚽ Спорт проигрыш', bonus_converted:'🔄 Бонус конвертирован' };
+      document.getElementById('mu-hist').innerHTML = txs.length ? txs.map(t=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div><div style="font-size:10px;font-weight:600">${tm[t.type]||t.type}</div><div style="font-size:9px;color:var(--mu)">${esc(t.desc||'')} · ${fmtD(t.ts)}</div></div><div style="font-family:var(--F);font-size:11px;font-weight:700;color:${t.amount>=0?'var(--grn)':'var(--red)'}">${t.amount>=0?'+':''}${fmt(Math.abs(t.amount))}₽</div></div>`).join('') : '<div style="color:var(--mu);font-size:10px">Нет транзакций</div>';
+    });
+    openM('user');
+  });
+}
+function adjBalance(sign) {
+  if(!_curUser) return;
+  const amt = parseFloat(document.getElementById('mu-adj-amt').value)||0;
+  const note = document.getElementById('mu-adj-note').value.trim()||'Ручная корректировка';
+  if(amt<=0){toast('Введи сумму','err');return;}
+  db.ref('users/'+_curUser.id).once('value',s=>{const u=s.val();if(!u)return;
+    const nb=(u.balance||0)+sign*amt;
+    db.ref('users/'+_curUser.id).update({balance:nb});
+    db.ref('txs/'+_curUser.id).push({type:sign>0?'deposit':'withdrawal',amount:sign*amt,desc:note,ts:Date.now()});
+    addNtf(_curUser.id,{icon:sign>0?'💰':'💸',title:sign>0?'Зачисление':'Списание',text:(sign>0?'+':'')+fmt(sign*amt)+'₽ · '+note});
+    toast((sign>0?'Зачислено +':'Списано -')+fmt(amt)+'₽','ok');
+    openUser(_curUser.id);
+  });
+}
+function giveBonusDlg() {
+  if(!_curUser)return;
+  const amt=parseFloat(prompt('Сумма бонуса (₽)?','500'));if(!amt||isNaN(amt))return;
+  const wm=parseFloat(prompt('Множитель отыгрыша?','3'));
+  db.ref('users/'+_curUser.id).once('value',s=>{const u=s.val();if(!u)return;
+    db.ref('users/'+_curUser.id).update({bonusBalance:(u.bonusBalance||0)+amt,bonusWagerRequired:(u.bonusWagerRequired||0)+amt*(wm||3)});
+    db.ref('txs/'+_curUser.id).push({type:'bonus',amount:amt,desc:'Ручной бонус от администратора',ts:Date.now()});
+    addNtf(_curUser.id,{icon:'🎁',title:'Бонус от администратора!',text:'+'+fmt(amt)+'₽ бонус. Отыгрыш ×'+wm});
+    toast('Бонус выдан!','ok');
+  });
+}
+function makeVip() {
+  if(!_curUser)return;
+  db.ref('users/'+_curUser.id).once('value',s=>{const u=s.val();if(!u)return;
+    const nv=!u.vip; db.ref('users/'+_curUser.id).update({vip:nv});
+    addNtf(_curUser.id,{icon:'👑',title:nv?'Ты теперь VIP!':'VIP снят',text:nv?'Поздравляем! Ты получил VIP статус.':'VIP статус был снят.'});
+    toast(nv?'VIP выдан!':'VIP снят','ok'); openUser(_curUser.id);
+  });
+}
+function toggleBan() {
+  if(!_curUser)return;
+  db.ref('users/'+_curUser.id).once('value',s=>{const u=s.val();if(!u)return;
+    const nb=!u.banned; db.ref('users/'+_curUser.id).update({banned:nb});
+    toast(nb?'Пользователь заблокирован':'Разблокирован','ok'); openUser(_curUser.id);
+  });
+}
+function giveFreeBet() {
+  if(!_curUser)return;
+  const amt=parseFloat(prompt('Сумма фрибета (₽)?','600'));if(!amt||isNaN(amt))return;
+  db.ref('users/'+_curUser.id).update({sportFreebet:amt,sportFreebetUsed:false});
+  addNtf(_curUser.id,{icon:'⚽',title:'Фрибет '+fmt(amt)+'₽!',text:'Тебе выдан фрибет на спорт!'});
+  toast('Фрибет выдан!','ok'); openUser(_curUser.id);
+}
+
+// ═══════════════════ SUPPORT ═══════════════════
+function loadChatList() {
+  db.ref('messages').once('value', s => {
+    const v = s.val(); if(!v) { document.getElementById('chat-list').innerHTML='<div style="padding:10px;color:var(--mu);font-size:10px">Нет сообщений</div>'; return; }
+    // Get last message per user
+    const uids = Object.keys(v);
+    const items = uids.map(uid => {
+      const msgs = Object.values(v[uid]).sort((a,b)=>a.ts-b.ts);
+      const last = msgs[msgs.length-1];
+      const unread = msgs.filter(m=>!m.fromAdmin&&!m.readByAdmin).length;
+      return {uid, last, unread, name:(last.uname||uid)};
+    }).sort((a,b)=>b.last.ts-a.last.ts);
+    document.getElementById('chat-list').innerHTML = items.map(i=>`<div onclick="openChat('${i.uid}','${esc(i.name)}')" style="padding:9px 12px;border-bottom:1px solid var(--b1);cursor:pointer;background:${_curChatUid===i.uid?'rgba(0,212,255,.07)':'transparent'};transition:background .1s">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:700;color:var(--tx)">${esc(i.name)}</span>${i.unread?`<span style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:4px">${i.unread}</span>`:''}</div>
+      <div style="font-size:9px;color:var(--mu);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((i.last.text||'').slice(0,40))}</div>
+    </div>`).join('');
+  });
+}
+function openChat(uid, name) {
+  _curChatUid = uid;
+  document.getElementById('chat-hd').textContent = name;
+  document.getElementById('chat-inp-area').style.display = 'block';
+  db.ref('messages/'+uid).on('value', s => {
+    const v = s.val(); const msgs = v ? Object.values(v).sort((a,b)=>a.ts-b.ts) : [];
+    const el = document.getElementById('chat-msgs');
+    el.innerHTML = msgs.map(m=>`<div class="msg ${m.fromAdmin?'mine':'theirs'}"><div class="msg-bub">${esc(m.text||'')}</div><div class="msg-meta">${m.fromAdmin?'Вы':'Игрок'} · ${fmtD(m.ts)}</div></div>`).join('');
+    el.scrollTop = el.scrollHeight;
+    // Mark as read by admin
+    msgs.forEach((m, idx) => { if(!m.fromAdmin&&!m.readByAdmin) { const keys = Object.keys(v); db.ref('messages/'+uid+'/'+keys[idx]+'/readByAdmin').set(true); } });
+  });
+  loadChatList();
+}
+function adminSendMsg() {
+  if (!_curChatUid) return;
+  const inp = document.getElementById('admin-chat-inp'); const text = inp.value.trim(); if(!text)return;
+  db.ref('messages/'+_curChatUid).push({ text, fromAdmin:true, ts:Date.now() });
+  addNtf(_curChatUid, { icon:'💬', title:'Ответ от поддержки', text:text.slice(0,60) });
+  inp.value = ''; inp.style.height='auto';
+}
+
+// ═══════════════════ SPORT MATCHES ═══════════════════
+let _editMatchId = null;
+function addMatch() {
+  const l=document.getElementById('sm-league').value.trim();
+  const t1=document.getElementById('sm-t1').value.trim();
+  const t2=document.getElementById('sm-t2').value.trim();
+  const dt=document.getElementById('sm-date').value;
+  const tm=document.getElementById('sm-time').value;
+  const o1=parseFloat(document.getElementById('sm-o1').value)||1.85;
+  const ox=parseFloat(document.getElementById('sm-ox').value)||3.20;
+  const o2=parseFloat(document.getElementById('sm-o2').value)||3.90;
+  const st=document.getElementById('sm-status').value;
+  if(!t1||!t2){toast('Заполни команды','err');return;}
+  const matches = [...(CFG.sportMatches||[])];
+  if (_editMatchId) {
+    const idx = matches.findIndex(m=>m.id===_editMatchId);
+    if(idx>=0) matches[idx]={...matches[idx],league:l,team1:t1,team2:t2,date:dt,time:tm,odd1:o1,oddX:ox,odd2:o2,status:st};
+    _editMatchId=null; document.querySelector('#pg-sport .btn-save').textContent='➕ ДОБАВИТЬ МАТЧ';
+  } else {
+    matches.push({id:'M'+Date.now().toString(36).toUpperCase(),league:l,team1:t1,team2:t2,date:dt,time:tm,odd1:o1,oddX:ox,odd2:o2,status:st,settled:false});
+  }
+  db.ref('config').update({sportMatches:matches});
+  ['sm-league','sm-t1','sm-t2','sm-date','sm-time'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('sm-o1').value='1.85'; document.getElementById('sm-ox').value='3.20'; document.getElementById('sm-o2').value='3.90';
+  toast('Матч сохранён!','ok');
+}
+function renderMatches() {
+  const matches = CFG.sportMatches||[];
+  document.getElementById('matches-tbl').innerHTML = matches.length ? matches.map(m=>`<tr>
+    <td>${esc(m.league||'—')}</td>
+    <td><b>${esc(m.team1)}</b> <span style="color:var(--tx2)">vs</span> <b>${esc(m.team2)}</b></td>
+    <td style="font-size:10px;color:var(--yel)">${m.date||''} ${m.time||''}</td>
+    <td style="font-family:var(--F);font-size:11px"><span style="color:var(--grn)">${(+m.odd1).toFixed(2)}</span> / <span style="color:var(--acc)">${(+(m.oddX||m.oddDraw||3)).toFixed(2)}</span> / <span style="color:var(--red)">${(+m.odd2).toFixed(2)}</span></td>
+    <td><span class="badge ${m.status==='live'?'br_':'by_'}">${m.status==='live'?'🔴 Лайв':'📅 Предст.'}</span>${m.settled?'<span class="badge ba_" style="margin-left:3px">✅ Завершён</span>':''}</td>
+    <td><div class="ab-wrap">
+      <button class="ab ab-a" onclick="editMatch('${m.id}')">✏️</button>
+      <button class="ab ab-y" onclick="toggleMatchLive('${m.id}')">${m.status==='live'?'Завершить':'Лайв'}</button>
+      <button class="ab ab-r" onclick="removeMatch('${m.id}')">🗑</button>
+    </div></td>
+  </tr>`).join('') : '<tr><td colspan="6" class="te">Матчей нет</td></tr>';
+}
+function editMatch(id) {
+  const m = (CFG.sportMatches||[]).find(x=>x.id===id); if(!m) return;
+  document.getElementById('sm-league').value=m.league||''; document.getElementById('sm-t1').value=m.team1||'';
+  document.getElementById('sm-t2').value=m.team2||''; document.getElementById('sm-date').value=m.date||'';
+  document.getElementById('sm-time').value=m.time||''; document.getElementById('sm-o1').value=m.odd1||1.85;
+  document.getElementById('sm-ox').value=m.oddX||m.oddDraw||3.20; document.getElementById('sm-o2').value=m.odd2||3.90;
+  document.getElementById('sm-status').value=m.status||'upcoming';
+  _editMatchId=id; document.querySelector('#pg-sport .btn-save').textContent='💾 ОБНОВИТЬ МАТЧ';
+  window.scrollTo(0,0);
+}
+function toggleMatchLive(id) {
+  const matches = [...(CFG.sportMatches||[])]; const idx=matches.findIndex(m=>m.id===id); if(idx<0)return;
+  matches[idx].status = matches[idx].status==='live'?'upcoming':'live';
+  db.ref('config').update({sportMatches:matches}); toast('Обновлено','ok');
+}
+function removeMatch(id) {
+  if(!confirm('Удалить матч?'))return;
+  const matches=(CFG.sportMatches||[]).filter(m=>m.id!==id);
+  db.ref('config').update({sportMatches:matches}); toast('Удалено','ok');
+}
+function clearAllMatches() {
+  if(!confirm('Удалить все матчи?'))return;
+  db.ref('config').update({sportMatches:[]}); toast('Все матчи удалены','ok');
+}
+db.ref('config/sportMatches').on('value', ()=>{ if(document.getElementById('pg-sport')?.classList.contains('on')) renderMatches(); });
+
+// ═══════════════════ SPORT BETS ═══════════════════
+function filterSportBets(f, el) {
+  _sbetFilter=f; document.querySelectorAll('#pg-sportbets .ab').forEach(b=>b.classList.remove('on')); el.classList.add('on');
+  renderSportBets();
+}
+function renderSportBets() {
+  const rows = _sbetFilter==='all' ? _allSBets : _allSBets.filter(b=>b.status===_sbetFilter);
+  const sm = { pending:{b:'by_',l:'⏳ Ожидает'}, won:{b:'bg_',l:'✅ Выиграл'}, lost:{b:'br_',l:'❌ Проиграл'} };
+  document.getElementById('sbets-tbl').innerHTML = rows.length ? rows.map(b=>{
+    const s = sm[b.status]||{b:'ba_',l:'—'};
+    const desc = (b.slip||[]).map(x=>esc(x.label||'—')).join(' + ')||'—';
+    const btns = b.status==='pending' ? [
+      `<button class="ab ab-g" onclick="settleSportBet('${b._uid}','${b._key}','won')">✅ Выиграл</button>`,
+      `<button class="ab ab-r" onclick="settleSportBet('${b._uid}','${b._key}','lost')">❌ Проиграл</button>`
+    ] : [];
+    return `<tr><td style="font-size:9px;color:var(--mu)">${fmtD(b.ts)}</td>
+    <td style="font-size:11px"><b>${esc(b._uid?.slice(0,12)||'—')}...</b></td>
+    <td style="font-size:10px;max-width:160px">${desc}</td>
+    <td style="font-family:var(--F);font-size:12px;font-weight:700;color:var(--yel)">${fmt(b.betAmt||0)}₽</td>
+    <td style="font-family:var(--F);color:var(--acc)">×${(+b.totalOdd||1).toFixed(2)}</td>
+    <td style="font-family:var(--F);font-size:12px;color:var(--grn)">${fmt(b.payout||0)}₽</td>
+    <td><span class="badge ${s.b}">${s.l}</span></td>
+    <td><div class="ab-wrap">${btns.join('')}</div></td></tr>`;
+  }).join('') : '<tr><td colspan="8" class="te">Нет ставок</td></tr>';
+  // Fix: 8 cols in header
+  document.querySelector('#sbets-tbl').closest('table').querySelector('thead tr').innerHTML='<th>Время</th><th>Игрок</th><th>Ставка</th><th>Сумма</th><th>×</th><th>Выигрыш</th><th>Статус</th><th>Действия</th>';
+}
+function settleSportBet(uid, key, result) {
+  db.ref('sportbets/'+uid+'/'+key).once('value', s => {
+    const b = s.val(); if(!b) return;
+    db.ref('sportbets/'+uid+'/'+key).update({status:result});
+    db.ref('users/'+uid).once('value', us => {
+      const u = us.val(); if(!u) return;
+      if (result==='won') {
+        const win = b.payout||0;
+        db.ref('users/'+uid).update({ balance:(u.balance||0)+win, totalWins:(u.totalWins||0)+1, totalWon:(u.totalWon||0)+(win-(b.betAmt||0)) });
+        db.ref('txs/'+uid).push({type:'sport_win',amount:win-(b.betAmt||0),desc:'[Спорт] Победа! +'+fmt(win)+'₽',ts:Date.now()});
+        addNtf(uid,{icon:'⚽',title:'Ставка выиграла!',text:'Победа! +'+fmt(win)+'₽ зачислено.'});
+        toast('Выигрыш зачислен: +'+fmt(win)+'₽','ok');
+      } else {
+        db.ref('txs/'+uid).push({type:'sport_loss',amount:-(b.betAmt||0),desc:'[Спорт] Проигрыш ставки '+fmt(b.betAmt||0)+'₽',ts:Date.now()});
+        addNtf(uid,{icon:'⚽',title:'Ставка проиграла',text:'К сожалению, ставка не сыграла.'});
+        toast('Ставка помечена как проигрыш','info');
+      }
+    });
+  });
+}
+
+// ═══════════════════ LEADERBOARD ═══════════════════
+function loadLbPrizes() {
+  const p = CFG.lbPrizes||[10000,5000,3000,2000,1500,1000,800,600,400,200];
+  for(let i=1;i<=10;i++){const el=document.getElementById('lb-p'+i);if(el)el.value=p[i-1]||0;}
+  document.getElementById('lb-enabled').checked = CFG.lbPrizeEnabled!==false;
+}
+function saveLbPrizes() {
+  const prizes=[]; for(let i=1;i<=10;i++) prizes.push(parseInt(document.getElementById('lb-p'+i)?.value)||0);
+  const enabled = document.getElementById('lb-enabled').checked;
+  db.ref('config').update({lbPrizes:prizes,lbPrize:prizes[0]||0,lbPrizeEnabled:enabled});
+  toast('Призы сохранены!','ok');
+}
+function resetLb() {
+  if(!confirm('Сбросить лидерборд?'))return;
+  db.ref('leaderboard').remove(); toast('Лидерборд сброшен','ok');
+}
+function awardAllPrizes() {
+  const prizes = CFG.lbPrizes||[10000,5000,3000,2000,1500,1000,800,600,400,200];
+  db.ref('leaderboard').orderByChild('turnover').once('value', s => {
+    const v = s.val(); if(!v) {toast('Нет данных','err');return;}
+    const sorted = Object.entries(v).map(([id,d])=>({uid:id,...d})).sort((a,b)=>b.turnover-a.turnover).slice(0,10);
+    const realPlayers = sorted.filter(r=>!r.isBot);
+    if(!realPlayers.length){toast('В топ-10 нет реальных игроков','err');return;}
+    const lines = sorted.map((r,i)=>{const p=prizes[i]||0;if(!p||r.isBot)return null;return '#'+(i+1)+' '+r.name+': +'+fmt(p)+'₽';}).filter(Boolean);
+    if(!lines.length){toast('Нет ненулевых призов','info');return;}
+    if(!confirm('Выдать призы:\n\n'+lines.join('\n')))return;
+    sorted.forEach((r,i)=>{
+      const prize=prizes[i]||0; if(!prize||r.isBot)return;
+      db.ref('users/'+r.uid).once('value',s=>{const u=s.val();if(!u)return;
+        const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+        db.ref('users/'+r.uid).update({balance:(u.balance||0)+prize});
+        db.ref('txs/'+r.uid).push({type:'bonus',amount:prize,desc:'🏆 Приз '+medal+' место в лидерборде!',ts:Date.now()});
+        addNtf(r.uid,{icon:'🏆',title:medal+' место! Поздравляем!',text:'+'+fmt(prize)+'₽ зачислено за место в рейтинге!'});
+      });
+    });
+    toast('Призы выданы!','ok');
+  });
+}
+function awardSinglePrize(uid, pos, prize) {
+  db.ref('users/'+uid).once('value',s=>{const u=s.val();if(!u){toast('Игрок не найден','err');return;}
+    if(!confirm('Выдать +'+fmt(prize)+'₽ за '+pos+'-е место?\n'+u.name))return;
+    const medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'#'+pos;
+    db.ref('users/'+uid).update({balance:(u.balance||0)+prize});
+    db.ref('txs/'+uid).push({type:'bonus',amount:prize,desc:'🏆 Приз '+medal+' место!',ts:Date.now()});
+    addNtf(uid,{icon:'🏆',title:medal+' место! Поздравляем!',text:'+'+fmt(prize)+'₽ за место в рейтинге!'});
+    toast('Выдано +'+fmt(prize)+'₽','ok');
+  });
+}
+function renderLbTable(snap) {
+  const v = snap?.val?.(); // called by listener
+  const renderFn = (v) => {
+    const prizes = CFG.lbPrizes||[10000,5000,3000,2000,1500,1000,800,600,400,200];
+    const all = v ? Object.entries(v).map(([id,d])=>({uid:id,...d})).sort((a,b)=>b.turnover-a.turnover) : [];
+    document.getElementById('lb-tbl').innerHTML = all.length ? all.slice(0,30).map((r,i)=>{
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'';
+      const prize=prizes[i]||0;
+      const btns=[]; if(!r.isBot&&prize>0) btns.push(`<button class="ab ab-y" onclick="awardSinglePrize('${r.uid}',${i+1},${prize})">🏆</button>`);
+      if(!r.isBot) btns.push(`<button class="ab ab-a" onclick="openUser('${r.uid}')">👤</button>`);
+      return `<tr><td style="font-size:15px">${medal}</td><td><b>${esc(r.name||'—')}</b></td>
+      <td>${r.isBot?'<span class="badge bp_">🤖 Бот</span>':'<span class="badge bg_">👤</span>'}</td>
+      <td style="font-family:var(--F)">${fmt(r.turnover||0)}₽</td>
+      <td style="font-family:var(--F);color:var(--yel)">${prize>0?'+'+fmt(prize)+'₽':'—'}</td>
+      <td><div class="ab-wrap">${btns.join('')}</div></td></tr>`;
+    }).join('') : '<tr><td colspan="6" class="te">Лидерборд пуст</td></tr>';
+  };
+  if (v !== undefined) renderFn(v);
+  else db.ref('leaderboard').orderByChild('turnover').once('value',s=>renderFn(s.val()));
+}
+
+// ══ BOTS ══
+const BOT_NAMES=['Alex_K','Maxim77','Vlad99','SkyBet','NightOwl','Lucky7','ProGamer','FastCash','MrWin','Tornado','SilverX','DeepBlue','Kira88','DarkHorse','GoldFinger','Striker','NovaBet','PixelX','CosmicR','StormZ','BetKing','IronFist','NeonWolf','CryptoAce','RedDragon','DuskRider','ZeroX'];
+function populateBotSel() {
+  const sel = document.getElementById('bot-sel'); if(!sel) return;
+  db.ref('leaderboard').once('value', s => {
+    const v = s.val()||{};
+    sel.innerHTML = BOT_NAMES.map((nm,i)=>{const key='BOT_'+i; const b=v[key]; return `<option value="${key}">${nm} — ${b?fmt(b.turnover||0):'0'}₽</option>`;}).join('');
+    onBotSel();
+  });
+}
+function onBotSel() {
+  const key = document.getElementById('bot-sel').value;
+  db.ref('leaderboard/'+key).once('value',s=>{const v=s.val(); document.getElementById('bot-to').value=v?v.turnover||0:0;});
+}
+function saveBotTurnover() {
+  const key=document.getElementById('bot-sel').value;
+  const val=parseInt(document.getElementById('bot-to').value)||0;
+  const idx=parseInt(key.replace('BOT_',''));
+  db.ref('leaderboard/'+key).set({name:BOT_NAMES[idx]||'Bot',turnover:val,isBot:true});
+  populateBotSel(); toast('Оборот бота сохранён!','ok');
+}
+function randomizeBots() {
+  if(!confirm('Рандомизировать обороты всех ботов?'))return;
+  const upd={};
+  BOT_NAMES.forEach((nm,i)=>{upd['BOT_'+i]={name:nm,turnover:Math.floor(Math.random()*120000+3000),isBot:true};});
+  db.ref('leaderboard').update(upd); populateBotSel(); toast('Рандомизировано!','ok');
+}
+function resetAllBots() {
+  if(!confirm('Сбросить обороты всех ботов до 0?'))return;
+  const upd={};
+  BOT_NAMES.forEach((nm,i)=>{upd['BOT_'+i]={name:nm,turnover:0,isBot:true};});
+  db.ref('leaderboard').update(upd); populateBotSel(); toast('Сброшено','ok');
+}
+
+// ═══════════════════ PROMOS ═══════════════════
+function renderPromos() {
+  const pcs = CFG.promoCodes||{};
+  const el = document.getElementById('promo-tbl');
+  const entries = Object.entries(pcs);
+  el.innerHTML = entries.length ? entries.map(([code,pc])=>`<tr>
+    <td style="font-family:'Courier New',monospace;font-weight:700;color:var(--acc)">${esc(code)}</td>
+    <td>${pc.type==='balance'?'💰 Баланс':'🎁 Бонус'}</td>
+    <td style="font-family:var(--F);color:var(--yel)">${fmt(pc.amount||0)}₽</td>
+    <td>${(pc.usedBy||[]).length} / ${pc.maxUses||'∞'}</td>
+    <td style="font-size:10px;color:var(--mu)">${pc.expires?new Date(pc.expires).toLocaleDateString('ru'):'∞'}</td>
+    <td>${pc.active?'<span class="badge bg_">✅ Активен</span>':'<span class="badge br_">❌ Выкл</span>'}</td>
+    <td><div class="ab-wrap">
+      <button class="ab ${pc.active?'ab-r':'ab-g'}" onclick="togglePromo('${code}')">${pc.active?'Выкл':'Вкл'}</button>
+      <button class="ab ab-r" onclick="deletePromo('${code}')">🗑</button>
+    </div></td>
+  </tr>`).join('') : '<tr><td colspan="7" class="te">Нет промокодов</td></tr>';
+}
+function createPromo() {
+  const code=document.getElementById('pr-code').value.trim().toUpperCase();
+  const type=document.getElementById('pr-type').value;
+  const amt=parseFloat(document.getElementById('pr-amt').value)||0;
+  const wm=parseFloat(document.getElementById('pr-wager').value)||3;
+  const exp=document.getElementById('pr-exp').value;
+  if(!code){toast('Введи код','err');return;} if(!amt){toast('Введи сумму','err');return;}
+  const pc = {type,amount:amt,wagerMultiplier:wm,active:true,usedBy:[],createdAt:Date.now()};
+  if(exp) pc.expires = new Date(exp).getTime();
+  db.ref('config/promoCodes/'+code).set(pc); document.getElementById('pr-code').value=''; toast('Промокод создан!','ok');
+}
+function togglePromo(code) { const a=(CFG.promoCodes||{})[code]?.active; db.ref('config/promoCodes/'+code+'/active').set(!a); toast('Обновлено','ok'); }
+function deletePromo(code) { if(!confirm('Удалить промокод?'))return; db.ref('config/promoCodes/'+code).remove(); toast('Удалено','ok'); }
+
+// ═══════════════════ BIGWINS ═══════════════════
+function renderBigWins(bw) {
+  const tpl=(id)=>bw.length ? bw.map(w=>`<tr>
+    <td style="font-size:9px;color:var(--mu)">${fmtD(w.ts)}</td>
+    <td><b>${esc(w.user||'—')}</b></td><td>${esc(w.game||'—')}</td>
+    <td style="color:var(--tx2)">${fmt(w.bet||0)}₽</td>
+    <td style="font-family:var(--F);color:var(--yel)">×${(w.mult||0).toFixed(2)}</td>
+    <td style="font-family:var(--F);font-weight:700;color:var(--grn)">${fmt(w.win||0)}₽</td>
+  </tr>`).join('') : '<tr><td colspan="6" class="te">Нет данных</td></tr>';
+  ['bw-tbl','bw-tbl2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=tpl(id);});
+}
+
+// ═══════════════════ SETTINGS ═══════════════════
+function loadSettings() {
+  const c = CFG;
+  setValue('s-name',c.siteName||'CrashX'); setValue('s-minbet',c.minBet||10); setValue('s-maxbet',c.maxBet||50000);
+  setValue('s-mindep',c.minDep||100); setValue('s-minwth',c.minWith||500); setValue('s-usdt',c.usdtRub||91.5);
+  setValue('s-hedge',c.houseEdge||5); setValue('s-maxm',c.maxMult||100); setValue('s-force-crash',c.forceCrash||0);
+  const addr=c.addresses||{};
+  ['usdt_trc20','usdt_erc20','btc','eth','ltc'].forEach(k=>setValue('s-'+k,addr[k]||''));
+  setChecked('s-online',c.supportOnline!==false); setValue('s-autoreply',c.autoReply||'');
+  setValue('s-ref',c.refPercent||10); setValue('s-vip-daily',c.vipDailyAmt||500);
+  setValue('s-ann',c.announcement||''); setChecked('s-ann-on',!!c.announcementActive);
+  setChecked('s-maint',!!c.maintenance); setValue('s-maint-msg',c.maintenanceMsg||'');
+  const col=c.colors||{}; ['acc','acc2','bg','sur','tx','tx2'].forEach(k=>{setValue('c-'+k,col[k]||'');});
+}
+function setValue(id,v){const el=document.getElementById(id);if(el)el.value=v;}
+function setChecked(id,v){const el=document.getElementById(id);if(el)el.checked=!!v;}
+function saveSettings(section) {
+  const g = (id,def='')=>(document.getElementById(id)?.value??def);
+  const gc = (id)=>(document.getElementById(id)?.checked??false);
+  let patch = {};
+  if(section==='general'){patch={siteName:g('s-name'),minBet:+g('s-minbet'),maxBet:+g('s-maxbet'),minDep:+g('s-mindep'),minWith:+g('s-minwth'),usdtRub:+g('s-usdt')};}
+  if(section==='crash'){
+    const fc=parseFloat(g('s-force-crash'))||0;
+    patch={houseEdge:+g('s-hedge'),maxMult:+g('s-maxm')};
+    if(fc>1) patch.forceCrash=fc; else patch.forceCrash=0;
+  }
+  if(section==='addresses'){const addr={};['usdt_trc20','usdt_erc20','btc','eth','ltc'].forEach(k=>{addr[k]=g('s-'+k);});patch={addresses:addr};}
+  if(section==='support'){patch={supportOnline:gc('s-online'),autoReply:g('s-autoreply'),refPercent:+g('s-ref'),vipDailyAmt:+g('s-vip-daily')};}
+  if(section==='ann'){patch={announcement:g('s-ann'),announcementActive:gc('s-ann-on'),maintenance:gc('s-maint'),maintenanceMsg:g('s-maint-msg')};}
+  if(section==='colors'){const colors={acc:g('c-acc'),acc2:g('c-acc2'),bg:g('c-bg'),sur:g('c-sur'),tx:g('c-tx'),tx2:g('c-tx2')};patch={colors};}
+  db.ref('config').update(patch); toast('Настройки сохранены!','ok');
+}
+function resetColors() { db.ref('config/colors').remove(); toast('Цвета сброшены','ok'); }
+
+// ═══════════════════ LUCK OVERRIDE ═══════════════════
+function setLuckOverride() {
+  const uid=document.getElementById('luck-uid').value.trim();
+  const val=parseInt(document.getElementById('luck-val').value)||0;
+  if(!uid){toast('Введи UID','err');return;}
+  db.ref('config/luckOverride/'+uid).set(val);
+  document.getElementById('luck-uid').value=''; document.getElementById('luck-val').value='0';
+  toast('Удача установлена для '+uid.slice(0,12)+'...','ok');
+}
+function loadLuckList() {
+  const lo = CFG.luckOverride||{};
+  const el = document.getElementById('luck-list'); if(!el) return;
+  const entries = Object.entries(lo).filter(([,v])=>v!==0);
+  el.innerHTML = entries.length ? entries.map(([uid,val])=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+    <span style="font-family:'Courier New',monospace;font-size:10px;color:var(--tx2);flex:1">${uid.slice(0,20)}...</span>
+    <span style="font-family:var(--F);font-size:13px;font-weight:700;color:${val>0?'var(--grn)':'var(--red)'}">${val>0?'+':''}${val}</span>
+    <button class="ab ab-r" onclick="removeLuck('${uid}')">✕</button>
+  </div>`).join('') : '<div style="font-size:10px;color:var(--mu)">Нет переопределений удачи</div>';
+}
+function removeLuck(uid) { db.ref('config/luckOverride/'+uid).remove(); toast('Удача сброшена','ok'); }
+
+// ═══════════════════ NOTIFICATIONS HELPER ═══════════════════
+function addNtf(uid, ntf) { db.ref('notifications/'+uid).push({...ntf,ts:Date.now(),read:false}); }
+
+// ═══════════════════ STARTUP ═══════════════════
+if (sessionStorage.getItem('cx_admin') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  initAdmin();
+}
+</script>
+</body>
+</html>

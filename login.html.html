@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>CrashX Casino — Войти</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+:root{
+  --bg:#07090e;--sur:#0c1118;--sur2:#111820;--b1:#1c2b3a;--b2:#223044;
+  --acc:#00d4ff;--acc2:#005fff;--grn:#00e676;--red:#ff4566;--yel:#ffd040;
+  --tx:#d4e8f8;--tx2:#6e95b0;--mu:#3a5265;
+  --F:'Rajdhani',sans-serif;--f:'Nunito',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);font-family:var(--f);color:var(--tx);overscroll-behavior:none}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100svh;padding:16px}
+
+/* Background */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,200,255,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.012) 1px,transparent 1px);
+  background-size:48px 48px}
+.orb{position:fixed;pointer-events:none;border-radius:50%}
+.o1{top:-180px;left:-120px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,70,200,.1) 0%,transparent 65%)}
+.o2{bottom:-130px;right:-90px;width:420px;height:420px;background:radial-gradient(circle,rgba(0,160,220,.07) 0%,transparent 65%)}
+
+/* WRAP */
+.wrap{width:100%;max-width:400px;position:relative;z-index:1}
+
+/* LOGO */
+.logo-area{text-align:center;margin-bottom:28px}
+.logo-mark{width:56px;height:56px;background:linear-gradient(135deg,var(--acc2),var(--acc));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px}
+.logo-name{font-family:var(--F);font-size:32px;font-weight:700;letter-spacing:5px;background:linear-gradient(90deg,var(--acc),#6ab4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block}
+.logo-sub{font-size:11px;color:var(--tx2);margin-top:3px;letter-spacing:.5px}
+
+/* TABS */
+.tabs{display:flex;background:var(--sur2);border:1px solid var(--b1);border-radius:10px;padding:3px;margin-bottom:18px;gap:3px}
+.tab{flex:1;padding:8px;text-align:center;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;color:var(--tx2);transition:all .15s;user-select:none}
+.tab.on{background:var(--sur);color:var(--acc);box-shadow:0 1px 8px rgba(0,0,0,.3)}
+
+/* FORM CARD */
+.form-card{background:var(--sur);border:1px solid var(--b1);border-radius:16px;padding:22px 20px}
+.fi{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.fi label{font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1.5px}
+.fi input,.fi select{background:var(--sur2);border:1px solid var(--b2);border-radius:9px;padding:11px 13px;color:var(--tx);font-family:var(--f);font-size:13px;outline:none;transition:border .15s;width:100%}
+.fi input::placeholder{color:var(--mu)}
+.fi input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,212,255,.08)}
+.fi .hint{font-size:9px;color:var(--mu)}
+.err-msg{font-size:11px;color:var(--red);min-height:14px;text-align:center;margin-bottom:6px}
+.ok-msg{font-size:11px;color:var(--grn);min-height:14px;text-align:center;margin-bottom:6px}
+
+/* BUTTON */
+.btn-main{width:100%;padding:13px;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;border-radius:11px;color:#fff;font-family:var(--F);font-size:15px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:opacity .12s,transform .08s;position:relative;overflow:hidden;margin-top:4px}
+.btn-main:hover{opacity:.9}.btn-main:active{transform:scale(.98)}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+.btn-main .spin{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;position:absolute;right:16px;top:50%;transform:translateY(-50%)}
+@keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
+.btn-main.loading .spin{display:block}
+
+/* DIVIDER */
+.or-div{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--mu);font-size:10px}
+.or-div::before,.or-div::after{content:'';flex:1;height:1px;background:var(--b1)}
+
+/* TELEGRAM BTN */
+.tg-btn{width:100%;padding:11px;background:rgba(0,119,200,.15);border:1px solid rgba(0,119,200,.3);border-radius:11px;color:#5aabff;font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;transition:background .12s;display:flex;align-items:center;justify-content:center;gap:7px}
+.tg-btn:hover{background:rgba(0,119,200,.25)}
+.tg-ico{font-size:16px}
+
+/* TERMS */
+.terms{font-size:9px;color:var(--mu);text-align:center;margin-top:12px;line-height:1.6}
+.terms a{color:var(--tx2);cursor:pointer}
+
+/* BENEFITS */
+.benefits{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.bene{background:var(--sur);border:1px solid var(--b1);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+.bene-ico{font-size:18px;flex-shrink:0}
+.bene-txt{font-size:10px;color:var(--tx2);line-height:1.4}
+.bene-ttl{font-size:11px;font-weight:700;color:var(--tx);display:block;margin-bottom:1px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);z-index:999;background:var(--sur);border:1px solid var(--b1);border-radius:9px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--tx);opacity:0;transition:all .22s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.4);display:flex;align-items:center;gap:6px}
+.toast::before{content:'';width:3px;align-self:stretch;border-radius:2px;flex-shrink:0}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok::before{background:var(--grn)}.toast.err::before{background:var(--red)}.toast.info::before{background:var(--acc)}
+
+/* PAGES */
+.page{display:none}.page.on{display:block}
+
+/* PASSWORD STRENGTH */
+.pw-strength{height:3px;background:var(--b2);border-radius:2px;margin-top:4px;overflow:hidden}
+.pw-strength-bar{height:100%;border-radius:2px;transition:width .2s,background .2s;width:0}
+
+/* REFERRAL HIGHLIGHT */
+.ref-box{background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.ref-box-ico{font-size:16px}.ref-box-txt{font-size:10px;color:var(--grn);line-height:1.4}
+</style>
+</head>
+<body>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+
+<div class="wrap">
+  <!-- LOGO -->
+  <div class="logo-area">
+    <div class="logo-mark">🎰</div>
+    <span class="logo-name" id="logo-nm">CRASHX</span>
+    <div class="logo-sub">Онлайн-казино · Краш · Мины · Спорт</div>
+  </div>
+
+  <!-- BENEFITS (только на стартовом виде) -->
+  <div class="benefits" id="benefits-row">
+    <div class="bene"><div class="bene-ico">🚀</div><div class="bene-txt"><span class="bene-ttl">Краш-игра</span>Ставь и кашируй</div></div>
+    <div class="bene"><div class="bene-ico">💣</div><div class="bene-txt"><span class="bene-ttl">Мины</span>×100 на одной клетке</div></div>
+    <div class="bene"><div class="bene-ico">⚽</div><div class="bene-txt"><span class="bene-ttl">Спорт</span>Лайв и ординары</div></div>
+    <div class="bene"><div class="bene-ico">💳</div><div class="bene-txt"><span class="bene-ttl">Выплаты</span>Карта и крипто</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab on" id="tab-login" onclick="switchTab('login')">🔑 ВОЙТИ</div>
+    <div class="tab" id="tab-reg" onclick="switchTab('reg')">🚀 РЕГИСТРАЦИЯ</div>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <div class="page on" id="page-login">
+    <div class="form-card">
+      <div class="err-msg" id="l-err"></div>
+      <div class="fi">
+        <label>Email или логин</label>
+        <input id="l-email" type="email" placeholder="your@email.com" inputmode="email" autocomplete="email">
+      </div>
+      <div class="fi">
+        <label>Пароль</label>
+        <input id="l-pw" type="password" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-main" id="l-btn" onclick="doLogin()">
+        ВОЙТИ <div class="spin"></div>
+      </button>
+      <div class="or-div">или</div>
+      <button class="tg-btn" onclick="openTG()">
+        <span class="tg-ico">✈️</span> Войти через Telegram бота
+      </button>
+    </div>
+    <div class="terms">
+      Входя, ты принимаешь <a>Правила сервиса</a>.<br>
+      Игра доступна лицам от 18 лет.
+    </div>
+  </div>
+
+  <!-- REGISTER FORM -->
+  <div class="page" id="page-reg">
+    <div class="form-card">
+      <div id="ref-promo-box" class="ref-box" style="display:none">
+        <div class="ref-box-ico">🤝</div>
+        <div class="ref-box-txt">Ты регистрируешься по реферальной ссылке.<br><strong id="ref-promo-code"></strong></div>
+      </div>
+      <div class="err-msg" id="r-err"></div>
+      <div class="ok-msg" id="r-ok"></div>
+      <div class="fi">
+        <label>Имя (никнейм)</label>
+        <input id="r-nm" type="text" placeholder="SuperPlayer" autocomplete="off" maxlength="30">
+      </div>
+      <div class="fi">
+        <label>Email</label>
+        <input id="r-em" type="email" placeholder="your@email.com" inputmode="email" autocomplete="email">
+      </div>
+      <div class="fi">
+        <label>Пароль</label>
+        <input id="r-pw" type="password" placeholder="Мин. 6 символов" autocomplete="new-password"
+          oninput="checkPwStrength(this.value)">
+        <div class="pw-strength"><div class="pw-strength-bar" id="pw-bar"></div></div>
+      </div>
+      <div class="fi">
+        <label>Промокод или реферальный код (необязательно)</label>
+        <input id="r-pr" type="text" placeholder="PROMO или REF-код" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'')">
+      </div>
+      <button class="btn-main" id="r-btn" onclick="doReg()">
+        СОЗДАТЬ АККАУНТ <div class="spin"></div>
+      </button>
+      <div class="or-div">или</div>
+      <button class="tg-btn" onclick="openTG()">
+        <span class="tg-ico">✈️</span> Войти через Telegram бота
+      </button>
+    </div>
+    <div class="terms">
+      Регистрируясь, ты принимаешь <a>Правила сервиса</a>.<br>
+      Игра доступна лицам от 18 лет.
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ─── Авто-заполнение реферального кода из URL ──────────────────
+const urlParams = new URLSearchParams(location.search);
+const urlRef = urlParams.get('ref') || urlParams.get('r') || '';
+if (urlRef) {
+  const box = document.getElementById('ref-promo-box');
+  document.getElementById('ref-promo-code').textContent = 'Реф. код: ' + urlRef;
+  box.style.display = 'flex';
+  // Switch to reg tab automatically
+  setTimeout(() => switchTab('reg'), 100);
+}
+
+// ─── Брендинг ──────────────────────────────────────────────────
+db.ref('config/siteName').once('value', s => {
+  const nm = s.val() || 'CrashX';
+  document.title = nm + ' Casino';
+  document.getElementById('logo-nm').textContent = nm.toUpperCase();
+});
+
+// ─── Если уже залогинен — редиректим ──────────────────────────
+const savedUid = localStorage.getItem('cx_uid');
+if (savedUid) {
+  db.ref('users/' + savedUid).once('value', s => {
+    if (s.val() && !s.val().banned) {
+      location.href = 'index.html';
+    } else {
+      localStorage.removeItem('cx_uid');
+    }
+  });
+}
+
+// ─── Утилиты ───────────────────────────────────────────────────
+function hp(p) { let h=0; for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;} return h.toString(36); }
+function toast(msg, type='info') {
+  const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+type;
+  if(window._tt)clearTimeout(window._tt); window._tt=setTimeout(()=>el.classList.remove('show'),3000);
+}
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = on; btn.classList.toggle('loading', on);
+}
+function genRefCode(nm) { return (nm.slice(0,3).toUpperCase()+'REF'+Math.floor(Math.random()*9000+1000)); }
+
+// ─── Переключение вкладок ──────────────────────────────────────
+function switchTab(t) {
+  document.getElementById('tab-login').classList.toggle('on', t==='login');
+  document.getElementById('tab-reg').classList.toggle('on', t==='reg');
+  document.getElementById('page-login').classList.toggle('on', t==='login');
+  document.getElementById('page-reg').classList.toggle('on', t==='reg');
+  document.getElementById('benefits-row').style.display = t==='login' ? 'grid' : 'none';
+  document.getElementById('l-err').textContent = '';
+  document.getElementById('r-err').textContent = '';
+  document.getElementById('r-ok').textContent = '';
+  if (urlRef && t==='reg' && !document.getElementById('r-pr').value) {
+    document.getElementById('r-pr').value = urlRef;
+  }
+}
+
+// ─── Сила пароля ───────────────────────────────────────────────
+function checkPwStrength(pw) {
+  const bar = document.getElementById('pw-bar');
+  if (!pw) { bar.style.width='0'; return; }
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[A-Z]/.test(pw)||/[а-яА-Я]/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  const pct = Math.min(score * 22, 100);
+  const col = score<=1?'var(--red)':score<=2?'var(--yel)':score<=3?'var(--acc)':'var(--grn)';
+  bar.style.width = pct+'%'; bar.style.background = col;
+}
+
+// ─── ВХОД ──────────────────────────────────────────────────────
+async function doLogin() {
+  const em = document.getElementById('l-email').value.trim().toLowerCase();
+  const pw = document.getElementById('l-pw').value;
+  const errEl = document.getElementById('l-err');
+  errEl.textContent = '';
+  if (!em) { errEl.textContent = 'Введи email'; return; }
+  if (!pw) { errEl.textContent = 'Введи пароль'; return; }
+  setLoading('l-btn', true);
+  try {
+    const snap = await db.ref('users').orderByChild('email').equalTo(em).once('value');
+    const val = snap.val();
+    if (!val) { errEl.textContent = '❌ Пользователь не найден'; setLoading('l-btn',false); return; }
+    const [uid, u] = Object.entries(val)[0];
+    if (u.password !== hp(pw)) { errEl.textContent = '❌ Неверный пароль'; setLoading('l-btn',false); return; }
+    if (u.banned) { errEl.textContent = '⛔ Аккаунт заблокирован'; setLoading('l-btn',false); return; }
+    localStorage.setItem('cx_uid', uid);
+    toast('Добро пожаловать, ' + (u.name||'игрок') + '!', 'ok');
+    setTimeout(() => { location.href = 'index.html'; }, 600);
+  } catch(e) {
+    errEl.textContent = 'Ошибка подключения. Попробуй снова.';
+    setLoading('l-btn', false);
+  }
+}
+
+// ─── РЕГИСТРАЦИЯ ───────────────────────────────────────────────
+async function doReg() {
+  const nm  = document.getElementById('r-nm').value.trim();
+  const em  = document.getElementById('r-em').value.trim().toLowerCase();
+  const pw  = document.getElementById('r-pw').value;
+  const pr  = document.getElementById('r-pr').value.trim().toUpperCase();
+  const errEl = document.getElementById('r-err');
+  const okEl  = document.getElementById('r-ok');
+  errEl.textContent = ''; okEl.textContent = '';
+
+  // Validation
+  if (!nm || nm.length < 2)     { errEl.textContent = '❌ Имя минимум 2 символа'; return; }
+  if (!em || !em.includes('@')) { errEl.textContent = '❌ Некорректный email'; return; }
+  if (!pw || pw.length < 6)     { errEl.textContent = '❌ Пароль минимум 6 символов'; return; }
+
+  setLoading('r-btn', true);
+  try {
+    // Check email unique
+    const emailSnap = await db.ref('users').orderByChild('email').equalTo(em).once('value');
+    if (emailSnap.val()) { errEl.textContent = '❌ Email уже зарегистрирован'; setLoading('r-btn',false); return; }
+
+    // Resolve referral
+    let refBy = null;
+    if (pr) {
+      const refSnap = await db.ref('users').orderByChild('refCode').equalTo(pr).once('value');
+      if (refSnap.val()) {
+        refBy = Object.keys(refSnap.val())[0];
+      } else {
+        // Maybe it's a promo code — check config
+        const cfgSnap = await db.ref('config/promoCodes/'+pr).once('value');
+        if (!cfgSnap.val()) {
+          errEl.textContent = '❌ Промокод не найден';
+          setLoading('r-btn', false);
+          return;
+        }
+      }
+    }
+
+    const uid = 'web_' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+    const refCode = genRefCode(nm);
+
+    // Build user object
+    const user = {
+      id: uid, name: nm, email: em, password: hp(pw),
+      balance: 0, bonusBalance: 0, bonusWager: 0, bonusWagerRequired: 0,
+      totalBets: 0, totalWins: 0, totalWon: 0, maxMult: 1,
+      createdAt: Date.now(), banned: false, vip: false,
+      refCode, refBy: refBy || null, refEarned: 0, refCount: 0,
+      sportFreebet: 0, sportFreebetUsed: false, sportFreebetGiven: false,
+      monthTurnover: 0, cashbackPaid: 0, sportBetsCount: 0
+    };
+
+    // Apply promo code if it's a promo (not referral)
+    if (pr && !refBy) {
+      const cfgSnap = await db.ref('config').once('value');
+      const cfg = cfgSnap.val() || {};
+      const pc = (cfg.promoCodes || {})[pr];
+      if (pc && pc.active) {
+        if (!pc.expires || Date.now() < pc.expires) {
+          if (pc.type === 'balance') {
+            user.balance += pc.amount || 0;
+          } else if (pc.type === 'bonus') {
+            user.bonusBalance += pc.amount || 0;
+            user.bonusWagerRequired += (pc.amount || 0) * (pc.wagerMultiplier || 3);
+          }
+          // Mark promo as used
+          const usedBy = [...(pc.usedBy || []), uid];
+          await db.ref('config/promoCodes/'+pr+'/usedBy').set(usedBy);
+        }
+      }
+    }
+
+    // Increment ref count for referrer
+    if (refBy) {
+      db.ref('users/'+refBy).once('value', s => {
+        const ru = s.val(); if(!ru) return;
+        db.ref('users/'+refBy).update({ refCount: (ru.refCount||0)+1 });
+      });
+    }
+
+    await db.ref('users/'+uid).set(user);
+
+    // Welcome notification
+    db.ref('notifications/'+uid).push({
+      icon: '🎉', title: 'Добро пожаловать!',
+      text: 'Аккаунт создан. Пополни баланс и начни играть!',
+      ts: Date.now(), read: false
+    });
+
+    localStorage.setItem('cx_uid', uid);
+    okEl.textContent = '✅ Аккаунт создан! Перенаправляем...';
+    toast('Добро пожаловать, ' + nm + '!', 'ok');
+    setTimeout(() => { location.href = 'index.html'; }, 900);
+
+  } catch(e) {
+    console.error(e);
+    errEl.textContent = 'Ошибка. Попробуй снова.';
+    setLoading('r-btn', false);
+  }
+}
+
+// ─── Telegram вход ─────────────────────────────────────────────
+function openTG() {
+  // Подставь username своего бота
+  db.ref('config/tgBotUsername').once('value', s => {
+    const bot = s.val() || 'CrashXBot'; // ЗАМЕНИ НА USERNAME СВОЕГО БОТА
+    window.open('https://t.me/' + bot, '_blank');
+  });
+}
+</script>
+</body>
+</html>
